@@ -1,6 +1,17 @@
 # CivicSignal 360 — working status
 
-Updated 15 October 2026. The local prototype is usable; the full master prompt is not yet completely accepted.
+Updated 16 October 2026. The local prototype is usable; full master-prompt acceptance and production readiness are not claimed.
+
+## Current completion pass: requirements 1, 2, 4 and 5
+
+- Water → Operations now supports versioned supply schedules, recurring legitimate-use windows, meter hierarchy and an explicit accounting boundary. Complete-coverage balance and schedule review retain unknown data and do not claim confirmed leakage. See `docs/water-operations.md`.
+- All seven domains have structured manual field observations in inspection/intervention/follow-up records, Evidence Passport and exports. Offline drafts preserve the exact observations. Water evidence review identifies missing measurement, operating-context and follow-up support.
+- All seven role workflows passed browser acceptance on isolated SQLite data: operator review and assignment, inspector evidence/intervention/monitoring/follow-up, then operator closure and citizen tracking. Water configuration persistence, Marathi display and 390/768/1440 layouts passed.
+- Full backend suite: **197 passed**. JavaScript logic: **43 passed**. Frontend typecheck, lint and production build passed. Fresh-directory launcher verification passed **8 checks**, including repeated migrations/seed, worker processing, restart persistence and occupied-port failure. See `docs/verification.md` for the broader browser regression result.
+- SQLite backup now includes a checksum inventory; restore validates it and refuses existing targets. Backup/restore preservation and tampering rejection passed. The Windows one-click launcher is `START-CIVICSIGNAL.bat`.
+- GitHub Actions now includes fresh-directory startup and disposable Docker/PostgreSQL browser/restart jobs. Docker is not available locally; hosted execution must be verified separately. English/Marathi citizen workflows are implemented; full staff translation and comprehensive accessibility certification remain outside the verified scope.
+
+The following milestone list records earlier work; smaller test counts are historical, not the current suite total.
 
 ## Completed and verified
 

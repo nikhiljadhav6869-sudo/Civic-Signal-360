@@ -27,9 +27,25 @@ Stop the local services before backing up so the database and evidence files rep
 .venv\Scripts\python.exe scripts/backup.py --destination .runtime/backups/demo-2026-10-14
 ```
 
-The destination must be new. SQLite's backup API includes committed WAL contents; evidence is copied from `private-evidence`. Backups contain private data and are not public artifacts. Keep them out of version control.
+The destination must be new. SQLite's backup API includes committed WAL contents; evidence is copied from `private-evidence`. A manifest records SHA-256 checksums and sizes, and the database is integrity checked. Backups contain private data and are not public artifacts. Keep them out of version control.
 
-Restore into a new directory, preserve both `civicsignal.db` and `private-evidence`, set `CIVIC_DATA_DIR` to that directory, and start the launcher. Retain the original directory until validation is complete. PostgreSQL requires its own database backup tooling; this helper supports SQLite only.
+Restore into a new directory using the verified manifest:
+
+```powershell
+.venv\Scripts\python.exe -m scripts.restore --source .runtime/backups/demo-2026-10-14 --destination .runtime/restored-demo
+$env:CIVIC_DATA_DIR = Join-Path (Get-Location) '.runtime/restored-demo'
+.venv\Scripts\python.exe scripts/run.py --port 8011
+```
+
+Restore checks the inventory, paths, checksums and SQLite integrity before creating the target. Existing targets, linked paths and tampered backups are refused. Keep the original data until you have checked the restored reports and evidence. PostgreSQL requires its own database backup tooling; these helpers support SQLite only. Checksums detect accidental modification, not authenticity against an attacker who can replace both files and manifest.
+
+## Acceptance checks
+
+`python scripts/verify_startup.py` creates its own directory under `.runtime`, migrates and seeds twice, checks the worker and assets, then verifies shutdown, restart and persistence. It needs installed dependencies and a built frontend; it is not a clean-machine installation test.
+
+`scripts/completion-browser-check.mjs` requires an explicit localhost `CIVIC_BASE_URL`. Run it against a separate `CIVIC_DATA_DIR`, followed by `scripts/browser-check.mjs`, then the offline recovery scripts. Run these suites sequentially: they intentionally create synthetic reports and change demo configuration. The completion check records a synthetic electrical qualification on the demo inspector, which correctly revokes that inspector's old sessions.
+
+GitHub Actions additionally defines a disposable Docker/PostgreSQL job that builds the image, runs both browser suites and checks evidence counts across an application restart. Its execution status must be checked on GitHub; a configured workflow alone is not verification.
 
 ## Worker and diagnostics
 

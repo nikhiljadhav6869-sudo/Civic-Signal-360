@@ -21,16 +21,19 @@ def control(client, job, action):
 def claim(ident):
     # Scope queue selection to this test; unrelated tests can leave queued jobs.
     with SessionLocal() as db:
-        others = db.query(Job).filter(Job.id != ident, Job.status=='queued').all()
-        ids = [j.id for j in others]
+        others = db.query(Job).filter(Job.id != ident, Job.status.in_(['queued','running','pausing'])).all()
+        states = {j.id:j.status for j in others}
         for job in others: job.status='paused'
         db.commit()
-        assert claim_next(db) == ident
-        db.expire_all()
-        token = db.get(Job,ident).claim_token
-        for other in ids: db.get(Job,other).status='queued'
-        db.commit()
-        return token
+        try:
+            assert claim_next(db) == ident
+            db.expire_all()
+            return db.get(Job,ident).claim_token
+        finally:
+            # Expired running jobs from lease-recovery tests are candidates too.
+            # Restore their original state without weakening production claiming.
+            for other, status in states.items(): db.get(Job,other).status=status
+            db.commit()
 
 
 def test_queued_pause_resume_permissions_and_versions(login):

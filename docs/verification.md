@@ -1,6 +1,28 @@
 # Verification log
 
-Updated 15 October 2026. Only executed checks are marked passed.
+Updated 16 October 2026. Only executed checks are marked passed.
+
+## Current completion verification
+
+| Check | Actual result | Evidence |
+| --- | --- | --- |
+| Full Python suite | **197 passed**, 326.79 seconds, four known dependency/sample-size warnings | `artifacts/verification/completion-pytest.xml` |
+| JavaScript logic | **43 passed**, including structured field draft retention and water evidence-gap logic | `node --experimental-strip-types --test scripts/*.test.mjs` |
+| Frontend | Typecheck, ESLint and production build passed; 2,229 modules transformed | Installed tools in `apps/web/node_modules/.bin`; Vite 6.4.1 |
+| Browser regression | **37 passed**, no uncaught exceptions, failed API responses or external runtime requests | `artifacts/verification/browser-results.json`; isolated server `127.0.0.1:8010` |
+| Completion journeys | **8 passed**: water configuration save/reload, honest unknown accounting, Marathi/mobile; operator → inspector → operator closure across all seven domains, with structured evidence and citizen tracking | `artifacts/verification/completion-browser.json` |
+| Fresh-directory startup | **8 passed**: repeatable migrations/seed, bundled assets, duplicate-safe report, worker result, shutdown, restart persistence, occupied-port rejection | `artifacts/verification/completion-startup.json` |
+| SQLite backup/restore | Round-trip database/evidence, existing-destination refusal and checksum-tamper rejection pass within the full suite | `tests/test_backup_restore.py` |
+| Offline recovery regression | **13 passed**: four staff draft checks, four Marathi citizen-report checks, five Marathi private-photo checks; no uncaught page errors | `artifacts/verification/offline-field-results.json`, `offline-report-results.json`, `offline-photo-results.json` |
+| Docker/PostgreSQL and clean runner | CI jobs configured; not executed locally because Docker is unavailable | `.github/workflows/ci.yml`; hosted results recorded separately when available |
+
+All browser records are labelled synthetic fixtures. Fresh-directory startup uses already installed dependencies, so it is not a clean-machine install. The completion suite initially needed corrected accessible selectors, a new reason after each saved decision, and reauthentication after an administrator changed inspector permissions (the old session was correctly revoked). Regression tests now await asynchronous scenario responses/playback state and compare persisted decisions independently of dynamic list order. Suites run sequentially to avoid one test adding records while another checks counts. Narrow-screen water grid clipping was fixed and included in the completion layout assertions.
+
+An earlier sandboxed API attempt stalled on local event-loop sockets, and a diagnostic run with forced stack dumping encountered a Windows native access violation. The final full suite ran successfully with local socket access and without the diagnostic timer. These unsuccessful attempts are not counted as passes.
+
+## Earlier milestone evidence
+
+The entries below describe previous checks and their then-current limitations. Current suite totals above supersede earlier totals. The updated isolated server now returns priority review data and passes the seven end-to-end closure workflows; the older service on port 8000 was not used for this acceptance run.
 
 | Check | Actual result | Evidence |
 | --- | --- | --- |

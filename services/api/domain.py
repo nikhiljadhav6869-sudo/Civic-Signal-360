@@ -159,7 +159,7 @@ def full_case(db, case, user=None):
     names = {member.id: member.name for member in members}
     result["assignment_team"] = {"lead": {"id": case.assigned_to, "name": names.get(case.assigned_to, case.assigned_to)} if case.assigned_to else None, "supporting": [{"id": ident, "name": names.get(ident, ident)} for ident in case.secondary_assignees]}
     result["audits"] = [serialize_row(row, ["id", "actor_id", "action", "reason", "before", "after", "created_at"]) for row in db.query(Audit).filter_by(case_id=case.id).order_by(Audit.created_at).all()]
-    result["evidence_records"] = [serialize_row(row, ["id", "actor_id", "kind", "notes", "mime", "checklist", "created_at"]) for row in db.query(Evidence).filter_by(case_id=case.id).all()]
+    result["evidence_records"] = [serialize_row(row, ["id", "actor_id", "kind", "notes", "mime", "checklist", "observations", "created_at"]) for row in db.query(Evidence).filter_by(case_id=case.id).all()]
     for record in result["evidence_records"]:
         if record["kind"] == "photograph":
             record["url"] = f"/api/v1/evidence/{record['id']}/download"

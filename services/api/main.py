@@ -43,6 +43,8 @@ from .admin_registry import router as registry_router
 app.include_router(registry_router)
 from .baselines import router as baseline_router
 app.include_router(baseline_router)
+from .water_operations import router as water_operations_router
+app.include_router(water_operations_router)
 
 
 @app.middleware("http")
@@ -292,6 +294,7 @@ class NoteBody(StrictModel):
     notes: str = Field(min_length=5, max_length=10000)
     version: int = Field(ge=1)
     checklist: dict[str, bool] = Field(default_factory=dict)
+    observations: dict[str, Any] = Field(default_factory=dict, max_length=20)
     idempotency_key: str | None = Field(default=None, min_length=8, max_length=100)
 
 
@@ -299,13 +302,20 @@ def previous_field_submission(db, user, case, body, kind):
     if not body.idempotency_key:
         return None
     record = db.query(Evidence).filter_by(case_id=case.id, actor_id=user.id, idempotency_key=body.idempotency_key).first()
-    if record and (record.kind != kind or record.notes != body.notes or record.checklist != body.checklist):
+    if record and (record.kind != kind or record.notes != body.notes or record.checklist != body.checklist or (record.observations or {}) != body.observations):
         raise HTTPException(409, "This submission identifier already belongs to different field evidence.")
     return record
 
 
 class InspectionBody(NoteBody):
     kind: Literal["inspection", "follow_up"] = "inspection"
+
+
+@app.get("/api/v1/cases/{case_id}/field-schema")
+def field_schema(case_id: str, user=Depends(current_user), db=Depends(get_db)):
+    from .field_schema import SCHEMAS
+    case = case_access(db, user, case_id)
+    return {"domain": case.domain, "fields": SCHEMAS[case.domain], "provenance": "Manually recorded; not independently verified"}
 
 
 @app.post("/api/v1/cases/{case_id}/inspection")
@@ -315,6 +325,8 @@ def inspect_case(case_id: str, body: InspectionBody, user=Depends(current_user),
         raise HTTPException(403, "An assigned inspector records field findings.")
     if previous_field_submission(db, user, case, body, body.kind):
         return full_case(db, case, user)
+    from .field_schema import validate_observations
+    validate_observations(case.domain, body.observations)
     if case.domain == "electricity":
         if user.role != "inspector" or (user.settings or {}).get("electrical_qualified") is not True:
             raise HTTPException(403, "Electrical inspection records require an assigned inspector with an administrator-recorded electrical qualification.")
@@ -322,7 +334,7 @@ def inspect_case(case_id: str, body: InspectionBody, user=Depends(current_user),
             raise HTTPException(422, "Confirm the qualified electrical assessment before submitting this record.")
     if body.kind == "follow_up" and case.status != "monitoring":
         raise HTTPException(409, "Follow-up findings require the monitoring state.")
-    record = Evidence(id=uid(), case_id=case.id, actor_id=user.id, kind=body.kind, notes=body.notes, checklist=body.checklist, idempotency_key=body.idempotency_key)
+    record = Evidence(id=uid(), case_id=case.id, actor_id=user.id, kind=body.kind, notes=body.notes, checklist=body.checklist, observations=body.observations, idempotency_key=body.idempotency_key)
     mutate_case(db, user, case, body.version, body.kind, body.notes, evidence_ids=[record.id])
     db.add(record)
     db.commit()
@@ -336,6 +348,8 @@ def intervention(case_id: str, body: NoteBody, user=Depends(current_user), db=De
         raise HTTPException(403, "An assigned inspector records intervention evidence.")
     if previous_field_submission(db, user, case, body, "intervention"):
         return full_case(db, case, user)
+    from .field_schema import validate_observations
+    validate_observations(case.domain, body.observations)
     if case.domain == "electricity":
         if user.role != "inspector" or (user.settings or {}).get("electrical_qualified") is not True:
             raise HTTPException(403, "Electrical intervention records require an assigned inspector with an administrator-recorded electrical qualification.")
@@ -343,7 +357,7 @@ def intervention(case_id: str, body: NoteBody, user=Depends(current_user), db=De
             raise HTTPException(422, "Confirm qualified electrical responsibility before submitting this record.")
     if case.status != "assigned":
         raise HTTPException(409, "Assign this case before recording an intervention.")
-    record = Evidence(id=uid(), case_id=case.id, actor_id=user.id, kind="intervention", notes=body.notes, checklist=body.checklist, idempotency_key=body.idempotency_key)
+    record = Evidence(id=uid(), case_id=case.id, actor_id=user.id, kind="intervention", notes=body.notes, checklist=body.checklist, observations=body.observations, idempotency_key=body.idempotency_key)
     mutate_case(db, user, case, body.version, "intervention", body.notes, status="intervention", evidence_ids=[record.id])
     db.add(record)
     db.commit()

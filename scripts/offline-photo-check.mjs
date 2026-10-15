@@ -27,7 +27,7 @@ async function makeReport(suffix){
   const response=await context.request.post(base+'/api/v1/reports',{headers:{'X-CSRF-Token':csrf},data:{domain:'water',zone_id:'river',title:'Synthetic photo reconnect '+Date.now()+' '+suffix,description:'Synthetic private photo recovery verification, not a real observation.',location:'Public test landmark',idempotency_key:crypto.randomUUID()}});
   assert.equal(response.status(),201);return response.json();
 }
-async function open(report){await page.goto(base+'/reports');await page.getByRole('heading',{name:/Your reports, with|आपले अहवाल आणि/}).waitFor();if(await button('मराठी').count())await button('मराठी').click();await page.locator('.report-list button').filter({hasText:report.title}).click();await widget().waitFor();}
+async function open(report){await page.goto(base+'/reports');await page.getByRole('heading',{name:/Your reports, with|आपले अहवाल आणि/}).waitFor();if(await button('Switch reporting language to Marathi').count())await button('Switch reporting language to Marathi').click();await page.locator('.report-list button').filter({hasText:report.title}).click();await widget().waitFor();}
 async function count(report){
   const response=await observer.request.get(base+'/api/v1/cases/'+report.case_id);assert.equal(response.status(),200);
   const body=await response.json();return {evidence:body.evidence_records.filter(e=>e.kind==='photograph').length,audits:body.audits.filter(a=>a.action==='evidence_added').length};
@@ -80,7 +80,7 @@ try{
     await page.locator('.report-tracking').getByRole('heading',{name:third.title,exact:true}).waitFor();
     assert.equal(await button('खाजगी छायाचित्र पाठवा').isDisabled(),true);assert.equal(await widget().getByText('निवडले: synthetic-photo.png',{exact:true}).count(),0);
     await input().setInputFiles({name:'invalid.png',mimeType:'image/png',buffer:Buffer.from('not an image')});await widget().getByText('निवडले: invalid.png',{exact:true}).waitFor();
-    await button('खाजगी छायाचित्र पाठवा').click();await widget().getByRole('alert').filter({hasText:'सर्व्हरने हे छायाचित्र स्वीकारले नाही.'}).waitFor();
+    await button('खाजगी छायाचित्र पाठवा').click();await widget().getByRole('alert').filter({hasText:'हे छायाचित्र स्वीकारता आले नाही.'}).waitFor();
     assert.equal(await page.getByTestId('pending-photo').count(),0);assert.deepEqual(await count(third),{evidence:0,audits:0});assert.equal(await stored(third),null);
   });
   await check('Corrupt references are preserved until explicit clear; storage failure does not claim a saved copy',async()=>{

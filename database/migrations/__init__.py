@@ -13,13 +13,14 @@ BASELINE_VERSIONS = "0004_baseline_versions"
 JOB_CONTROLS = "0005_job_controls"
 SCENARIO_PLAYBACK = "0006_scenario_playback"
 DEMO_SESSION_ISOLATION = "0007_demo_session_isolation"
+FIELD_OBSERVATIONS = "0008_field_observations"
 
 
 def migrate(engine, metadata):
     with engine.begin() as connection:
         connection.execute(text("CREATE TABLE IF NOT EXISTS schema_migrations (revision VARCHAR(100) PRIMARY KEY, applied_at VARCHAR(100) NOT NULL)"))
         applied = {r[0] for r in connection.execute(text("SELECT revision FROM schema_migrations"))}
-        if applied - {BASELINE, EVIDENCE_KEYS, CASE_INSPECTORS, BASELINE_VERSIONS, JOB_CONTROLS, SCENARIO_PLAYBACK, DEMO_SESSION_ISOLATION}:
+        if applied - {BASELINE, EVIDENCE_KEYS, CASE_INSPECTORS, BASELINE_VERSIONS, JOB_CONTROLS, SCENARIO_PLAYBACK, DEMO_SESSION_ISOLATION, FIELD_OBSERVATIONS}:
             raise RuntimeError("Database schema is newer than this application; migration refused.")
         if BASELINE not in applied:
             from datetime import datetime, timezone
@@ -67,6 +68,15 @@ def migrate(engine, metadata):
                 if table_name in tables:
                     connection.execute(text(f"CREATE INDEX IF NOT EXISTS ix_{table_name}_demo_session_id ON {table_name} (demo_session_id)"))
             connection.execute(text('INSERT INTO schema_migrations (revision, applied_at) VALUES (:revision, :at)'), {'revision': DEMO_SESSION_ISOLATION, 'at': datetime.now(timezone.utc).isoformat()})
+
+
+        if FIELD_OBSERVATIONS not in applied:
+            from datetime import datetime, timezone
+            if "evidence" in inspect(connection).get_table_names():
+                columns = {column["name"] for column in inspect(connection).get_columns("evidence")}
+                if "observations" not in columns:
+                    connection.execute(text("ALTER TABLE evidence ADD COLUMN observations JSON NOT NULL DEFAULT '{}'"))
+            connection.execute(text('INSERT INTO schema_migrations (revision, applied_at) VALUES (:revision, :at)'), {'revision': FIELD_OBSERVATIONS, 'at': datetime.now(timezone.utc).isoformat()})
 
 
 if __name__ == "__main__":

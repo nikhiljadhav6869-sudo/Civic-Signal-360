@@ -1,11 +1,19 @@
 import {useEffect, useState} from 'react';
 import {api, ApiError, CivicCase, send} from './api';
 import {emptyFieldDraft, parseFieldDraft, prepareFieldSubmission, type FieldDraft, type FieldKind} from './fieldDraft';
+import {useInterfaceLanguage} from './uiLanguage';
 
 export function FieldNotes({item,userId,role,busy:parentBusy,onCase,onSaved}:{item:CivicCase;userId:string;role:string;busy:boolean;onCase:(item:CivicCase)=>void;onSaved:()=>Promise<void>}) {
+  const mr=useInterfaceLanguage()==='mr';
+  const [fields,setFields]=useState<Array<{key:string;label:string;mr:string;type:string;unit?:string;minimum?:number;maximum?:number;max_length?:number}>>([]);
+  const [schemaError,setSchemaError]=useState('');
+  useEffect(()=>{let active=true;api('/cases/'+item.id+'/field-schema').then(schema=>{if(active){setFields(schema.fields);setSchemaError('')}}).catch(()=>{if(active)setSchemaError(mr?'क्षेत्रीय फॉर्म उपलब्ध नाही. नोंदी जतन ठेवा व पृष्ठ पुन्हा उघडा.':'Domain form unavailable. Keep your notes and reopen the case to retry.')});return()=>{active=false}},[item.id,mr]);
   const storageKey='civic-notes-'+userId+'-'+item.id;
   const [initial]=useState(()=>{try{const raw=localStorage.getItem(storageKey);return {draft:parseFieldDraft(raw,item.version),saved:!!raw,error:''};}catch(error){return {draft:emptyFieldDraft(item.version),saved:false,error:error instanceof Error?error.message:'Device storage is unavailable.'};}});
   const [draft,setDraft]=useState<FieldDraft>(initial.draft);
+  // A successful status transition can advance the case while this form is empty.
+  // Adopt that version only for an untouched form; preserve unsent/pending evidence.
+  useEffect(()=>{setDraft(current=>!current.pending&&!current.notes&&!Object.keys(current.observations||{}).length?{...current,baseVersion:item.version}:current)},[item.version]);
   const [consent,setConsent]=useState(initial.saved);
   const [storageError,setStorageError]=useState(initial.error);
   const [error,setError]=useState('');
@@ -37,6 +45,7 @@ export function FieldNotes({item,userId,role,busy:parentBusy,onCase,onSaved}:{it
   const review=async()=>{setBusy(true);try{const latest=await api('/cases/'+item.id);onCase(latest);setReviewed(latest);setError('');}catch(error){setError(error instanceof Error?error.message:'Unable to refresh the case.');}finally{setBusy(false);}};
   return <section className="field-notes" data-testid="field-notes">
     <h3>Field findings & intervention</h3>
+    <fieldset disabled={locked}><legend>{mr?'या क्षेत्रातील प्रत्यक्ष निरीक्षणे':'Domain-specific field observations'}</legend><p className="helper">{mr?'अज्ञात मोजमाप रिकामे ठेवा. छायाचित्रावरून मोजमाप गृहीत धरू नका.':'Leave unknown measurements blank. Values are manually recorded, never inferred from photographs.'}</p>{schemaError&&<p role="alert">{schemaError}</p>}{fields.map(field=><label key={field.key}>{mr?field.mr:field.label}{field.unit?' · '+field.unit:''}<input type={field.type==='number'?'number':'text'} step={field.type==='number'?'any':undefined} min={field.minimum} max={field.maximum} maxLength={field.max_length} value={draft.observations?.[field.key]??''} onChange={e=>{const observations={...draft.observations};if(e.target.value==='')delete observations[field.key];else observations[field.key]=field.type==='number'?Number(e.target.value):e.target.value;update({...draft,observations})}}/></label>)}</fieldset>
     <p className="helper" role="status">{online?'Network available. Submission is always manual.':'Offline. Keep editing your draft; reconnect before submitting.'}</p>
     {['Record what you safely observed','Document the action and responsible crew','Specify a follow-up observation'].map((text,i)=><label className="checkbox-label" key={text}><input type="checkbox" disabled={locked} checked={draft.checklist[i]} onChange={e=>update({...draft,checklist:draft.checklist.map((v,j)=>i===j?e.target.checked:v)})}/>{text}</label>)}
     {electricalCase&&<><div className="info-banner"><strong>Electrical safety: keep away from suspected hazards. Use verified local emergency or utility channels. Never touch, test or repair energized equipment.</strong></div><label className="checkbox-label"><input type="checkbox" disabled={locked} checked={draft.electricalQualified} onChange={e=>update({...draft,electricalQualified:e.target.checked})}/>I confirm I am an administrator-qualified electricity inspector and this record reflects a safe, authorized assessment.</label><p className="helper">Electrical inspection and intervention submissions require an administrator-recorded qualification and this case-specific confirmation.</p></>}

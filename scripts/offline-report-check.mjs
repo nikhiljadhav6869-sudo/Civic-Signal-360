@@ -17,7 +17,7 @@ const location='सार्वजनिक बाजाराच्या प�
 const description='सुरक्षित अंतरावरून पाणी साचलेले दिसले. हा जोडणी पुनर्प्राप्तीचा कृत्रिम चाचणी अहवाल आहे.';
 const button=name=>page.getByRole('button',{name,exact:true});
 const reports=async()=>await (await context.request.get(base+'/api/v1/reports')).json();
-async function open(){await page.goto(base+'/report');await page.getByRole('heading',{name:/Let’s get it|योग्य विभागापर्यंत/}).waitFor();if(await button('मराठी').count())await button('मराठी').click();}
+async function open(){await page.goto(base+'/report');await page.getByRole('heading',{name:/Let’s get it|योग्य विभागापर्यंत/}).waitFor();if(await button('Switch reporting language to Marathi').count())await button('Switch reporting language to Marathi').click();}
 async function fillReport(value){await button('पुढे').click();await page.getByLabel('ठिकाण किंवा जवळची खूण').fill(location);await button('पुढे').click();await page.getByLabel('आपण काय पाहिले?').fill(value);await page.getByLabel('निरीक्षणाचे वर्णन करा').fill(description);await button('पुढे').click();await button('मसुदा जतन करा').click();}
 async function check(name,fn){try{await fn();result.checks.push({name,status:'passed'});console.log('PASS',name);}catch(error){result.checks.push({name,status:'failed',error:error.message});console.error('FAIL',name,error.message);await page.screenshot({path:path.join(artifact,'offline-report-failure.png'),fullPage:true}).catch(()=>{});throw error;}}
 let savedKey;

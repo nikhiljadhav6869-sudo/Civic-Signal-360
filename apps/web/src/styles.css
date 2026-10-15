@@ -47,3 +47,18 @@
 .association-list>article textarea{display:block;width:100%;margin:7px 0}
 .association-list>article .button{min-height:44px;font-size:12px}
 .association-list h3 .text-button{white-space:normal;text-align:left}
+/* Water review controls retain readable tables and a single-column mobile form. */
+.water-operations{padding:24px;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.water-operations>*{min-width:0}
+.water-operations>label,.water-operations label{display:grid;gap:6px}
+.water-operations fieldset{min-width:0;border:1px solid var(--border,#29414d);border-radius:10px;padding:14px}
+.water-operations legend{padding:0 8px;font-weight:600}
+.water-operations .checkbox-label{display:flex;align-items:center;gap:8px}
+.water-operations .checkbox-label input{width:auto}
+.water-operations summary{cursor:pointer;padding:12px 0;font-weight:600}
+.water-window{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:12px;padding:14px 0;border-bottom:1px solid #29414d}
+.water-weekdays{display:flex;flex-wrap:wrap;gap:14px;grid-column:1/-1}
+.water-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.water-operations td{vertical-align:top;white-space:normal}
+.water-operations select,.water-operations input,.water-operations textarea{max-width:100%;min-width:0}
+@media(max-width:768px){.water-window,.water-form-grid{grid-template-columns:1fr}.water-operations{padding:16px}.water-operations .table-scroll{max-width:100%;overflow:auto}}

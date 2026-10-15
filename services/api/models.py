@@ -203,6 +203,7 @@ class Evidence(Base):
     content_hash = Column(String)
     idempotency_key = Column(String)
     checklist = Column(JSON, default=dict, nullable=False)
+    observations = Column(JSON, default=dict, nullable=False)
     created_at = Column(String, default=now, nullable=False)
     __table_args__ = (Index("uq_evidence_submission", "case_id", "actor_id", "idempotency_key", unique=True),)
 

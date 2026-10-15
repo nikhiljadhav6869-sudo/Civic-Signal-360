@@ -225,19 +225,26 @@ await check('Evidence passport opens and exports authorized data',async()=>{
 });
 await check('Recorded scenario playback steps, pauses, restores and preserves case decisions',async()=>{
   await page.goto(base+'/scenarios');await ready();
-  await page.getByRole('button',{name:'Run scenario',exact:true}).click();
+  const [created]=await Promise.all([
+    page.waitForResponse(response=>response.request().method()==='POST'&&response.url().endsWith('/api/v1/scenarios')),
+    page.getByRole('button',{name:/^(Run scenario|Compute another run)$/}).click()
+  ]);
+  assert.equal(created.status(),202);
+  const createdRun=await created.json();
+  await page.waitForURL(url=>url.searchParams.get('run')===createdRun.id);
   await page.getByTestId('scenario-playback').waitFor({timeout:90000});
   const runId=new URL(page.url()).searchParams.get('run');assert.ok(runId);
   const run=await (await context.request.get(base+'/api/v1/jobs/'+runId)).json();
   assert.equal(run.status,'succeeded');
   const before=await Promise.all(run.result.case_ids.map(async id=>(await context.request.get(base+'/api/v1/cases/'+id)).json()));
-  assert.match(await page.getByTestId('playback-clock').innerText(),/Frame 1 of/);
+  await page.getByTestId('playback-clock').filter({hasText:'Frame 1 of'}).waitFor();
   await page.getByRole('button',{name:'Next simulation frame',exact:true}).click();
-  assert.match(await page.getByTestId('playback-clock').innerText(),/Frame 2 of/);
+  await page.getByTestId('playback-clock').filter({hasText:'Frame 2 of'}).waitFor();
   await page.getByRole('combobox',{name:'Playback speed',exact:true}).selectOption('4');
   await page.getByRole('button',{name:'Play playback',exact:true}).click();
-  await page.waitForTimeout(650);
+  await page.waitForFunction(()=>Number(document.querySelector('input[aria-label="Recorded simulation frame"]')?.value)>1);
   await page.getByRole('button',{name:'Pause playback',exact:true}).click();
+  await page.getByRole('button',{name:'Play playback',exact:true}).waitFor();
   const paused=await page.getByRole('slider',{name:'Recorded simulation frame',exact:true}).inputValue();
   assert.ok(Number(paused)>1);
   await page.waitForTimeout(500);
@@ -246,7 +253,7 @@ await check('Recorded scenario playback steps, pauses, restores and preserves ca
   assert.equal(await page.getByRole('slider',{name:'Recorded simulation frame',exact:true}).inputValue(),paused);
   assert.equal(await page.getByRole('button',{name:'Play playback',exact:true}).count(),1);
   await page.getByRole('button',{name:'Show completed run',exact:true}).click();
-  assert.match(await page.getByTestId('scenario-playback').innerText(),/Playback complete/);
+  await page.getByTestId('scenario-playback').getByText('Playback complete',{exact:true}).waitFor();
   await page.getByTestId('playback-baseline').getByRole('button',{name:'Data table',exact:true}).click();
   await page.getByTestId('playback-modified').getByRole('button',{name:'Data table',exact:true}).click();
   assert.equal(await page.getByTestId('playback-baseline').locator('tbody tr').count(),run.result.baseline.series.length);
@@ -254,7 +261,7 @@ await check('Recorded scenario playback steps, pauses, restores and preserves ca
   const linked=await page.getByTestId('scenario-playback').locator('.case-row').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('data-case-id')));
   assert.deepEqual([...linked].sort(),[...run.result.case_ids].sort());
   await page.getByRole('button',{name:'Restart playback',exact:true}).click();
-  assert.match(await page.getByTestId('playback-clock').innerText(),/Frame 1 of/);
+  await page.getByTestId('playback-clock').filter({hasText:'Frame 1 of'}).waitFor();
   assert.equal(await page.getByTestId('scenario-playback').locator('.case-row').count(),0);
   await page.getByTestId('playback-baseline').getByRole('button',{name:'Chart view',exact:true}).click();
   await page.getByTestId('playback-modified').getByRole('button',{name:'Chart view',exact:true}).click();
@@ -371,7 +378,9 @@ await check('Baseline candidate evaluation, administrator promotion and rollback
   await page.getByTestId('active-baseline').filter({hasText:previous.active_id}).waitFor();
   await signIn('operator@civicsignal.local');
   const after=await (await context.request.get(base+'/api/v1/cases')).json();
-  assert.deepEqual(after.map(c=>[c.id,c.status,c.version]),before.map(c=>[c.id,c.status,c.version]));
+  // Priority/age can change list ordering; compare the actual persisted decisions.
+  const decisions=rows=>rows.map(c=>[c.id,c.status,c.version]).sort((a,b)=>a[0].localeCompare(b[0]));
+  assert.deepEqual(decisions(after),decisions(before));
   assert.equal((await (await context.request.get(base+'/api/v1/analytics/water')).json()).baseline_id,previous.active_id);
 });
 await check('Scenario worker pause survives reload and resumes to a saved result',async()=>{
@@ -414,7 +423,7 @@ await check('Marathi report submission, receipt download and tracking persist',a
   await page.waitForURL('**/overview');
   await page.setViewportSize({width:390,height:844});
   await page.goto(base+'/report');await ready();
-  await page.getByRole('button',{name:'मराठी',exact:true}).click();
+  await page.getByRole('button',{name:'Switch reporting language to Marathi',exact:true}).click();
   await page.getByRole('button',{name:'पुढे',exact:true}).click();
   await page.getByLabel('ठिकाण किंवा जवळची खूण').fill('बाजाराच्या सार्वजनिक प्रवेशद्वाराजवळ');
   await page.getByRole('button',{name:'पुढे',exact:true}).click();

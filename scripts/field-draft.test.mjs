@@ -21,3 +21,12 @@ test('corrupt saved records are rejected rather than silently treated as valid d
   const draft=prepareFieldSubmission({...emptyFieldDraft(1),notes:'An observation'},'inspection','submission-456');
   assert.throws(()=>parseFieldDraft(JSON.stringify({...draft,notes:'Changed after pending submission'}),1));
 });
+
+test('domain measurements survive offline retry and cannot change a pending payload',()=>{
+  const source={...emptyFieldDraft(2),notes:'Measured synthetic water observation',observations:{measured_volume_l:0,measurement_minutes:5,measurement_method:'Timed sample'}};
+  const draft=prepareFieldSubmission(source,'inspection','domain-observation-001');
+  assert.deepEqual(parseFieldDraft(JSON.stringify(draft),9),draft);
+  source.observations.measured_volume_l=10;
+  assert.equal(draft.pending.observations.measured_volume_l,0);
+  assert.throws(()=>parseFieldDraft(JSON.stringify({...draft,observations:source.observations}),9));
+});
