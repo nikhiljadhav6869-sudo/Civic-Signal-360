@@ -1,5 +1,7 @@
 # CivicSignal 360
 
+CivicSignal 360 is a civic infrastructure monitoring platform for water, electricity, roads, drainage, waste, and streetlights, featuring English/Marathi citizen reporting, explainable analytics, case management, and reproducible simulations.
+
 **AI-Powered Smart Water & Multi-Civic Infrastructure Intelligence Platform**  
 **Detect Early. Act Smart. Build Better Cities.**
 
