@@ -1,0 +1,195 @@
+{
+  "base": "http://127.0.0.1:8000",
+  "started_at": "2026-10-14T20:20:11.345Z",
+  "checks": [
+    {
+      "name": "Landing works with external network denied",
+      "status": "passed",
+      "duration_ms": 3358
+    },
+    {
+      "name": "Command centre viewport 1440",
+      "status": "passed",
+      "duration_ms": 2869
+    },
+    {
+      "name": "Command centre viewport 768",
+      "status": "passed",
+      "duration_ms": 2242
+    },
+    {
+      "name": "Command centre viewport 390",
+      "status": "passed",
+      "duration_ms": 2276
+    },
+    {
+      "name": "Route /incidents",
+      "status": "passed",
+      "duration_ms": 1723
+    },
+    {
+      "name": "Route /domains/water",
+      "status": "passed",
+      "duration_ms": 1498
+    },
+    {
+      "name": "Route /domains/electricity",
+      "status": "passed",
+      "duration_ms": 1363
+    },
+    {
+      "name": "Route /domains/roads",
+      "status": "passed",
+      "duration_ms": 1404
+    },
+    {
+      "name": "Route /domains/drainage",
+      "status": "passed",
+      "duration_ms": 1712
+    },
+    {
+      "name": "Route /domains/waste",
+      "status": "passed",
+      "duration_ms": 1845
+    },
+    {
+      "name": "Route /domains/streetlights",
+      "status": "passed",
+      "duration_ms": 1637
+    },
+    {
+      "name": "Route /domains/general",
+      "status": "passed",
+      "duration_ms": 1631
+    },
+    {
+      "name": "Route /network",
+      "status": "passed",
+      "duration_ms": 1532
+    },
+    {
+      "name": "Route /forecast",
+      "status": "passed",
+      "duration_ms": 1495
+    },
+    {
+      "name": "Route /scenarios",
+      "status": "passed",
+      "duration_ms": 1543
+    },
+    {
+      "name": "Route /demo",
+      "status": "passed",
+      "duration_ms": 1954
+    },
+    {
+      "name": "Route /cross-domain",
+      "status": "passed",
+      "duration_ms": 1567
+    },
+    {
+      "name": "Route /impact",
+      "status": "passed",
+      "duration_ms": 1459
+    },
+    {
+      "name": "Route /lab",
+      "status": "passed",
+      "duration_ms": 1456
+    },
+    {
+      "name": "Route /report",
+      "status": "passed",
+      "duration_ms": 1870
+    },
+    {
+      "name": "Route /reports",
+      "status": "passed",
+      "duration_ms": 1695
+    },
+    {
+      "name": "Route /inspector",
+      "status": "passed",
+      "duration_ms": 1443
+    },
+    {
+      "name": "Route /notifications",
+      "status": "passed",
+      "duration_ms": 1501
+    },
+    {
+      "name": "Route /settings",
+      "status": "passed",
+      "duration_ms": 1360
+    },
+    {
+      "name": "Route /about",
+      "status": "passed",
+      "duration_ms": 1344
+    },
+    {
+      "name": "Timeline synchronizes observations, map, chart, URL and incident register",
+      "status": "passed",
+      "duration_ms": 8164
+    },
+    {
+      "name": "Network closures reroute, disconnect, reopen and reset without changing cases",
+      "status": "passed",
+      "duration_ms": 9323
+    },
+    {
+      "name": "Network investigation overlays match authorized cases and open evidence",
+      "status": "passed",
+      "duration_ms": 5953
+    },
+    {
+      "name": "Timeline zone filtering has honest empty telemetry and mobile controls",
+      "status": "passed",
+      "duration_ms": 4373
+    },
+    {
+      "name": "Evidence passport opens and exports authorized data",
+      "status": "passed",
+      "duration_ms": 3682
+    },
+    {
+      "name": "Recorded scenario playback steps, pauses, restores and preserves case decisions",
+      "status": "passed",
+      "duration_ms": 28003
+    },
+    {
+      "name": "Supporting team assignment, field access and removal work in the interface",
+      "status": "passed",
+      "duration_ms": 18461
+    },
+    {
+      "name": "Baseline candidate evaluation, administrator promotion and rollback preserve decisions",
+      "status": "passed",
+      "duration_ms": 23200
+    },
+    {
+      "name": "Scenario worker pause survives reload and resumes to a saved result",
+      "status": "passed",
+      "duration_ms": 8787
+    },
+    {
+      "name": "Marathi report submission, receipt download and tracking persist",
+      "status": "passed",
+      "duration_ms": 4793
+    },
+    {
+      "name": "No external runtime dependencies requested",
+      "status": "passed",
+      "duration_ms": 0
+    },
+    {
+      "name": "No uncaught browser exceptions",
+      "status": "passed",
+      "duration_ms": 0
+    }
+  ],
+  "external_requests": [],
+  "console_errors": [],
+  "api_errors": [],
+  "finished_at": "2026-10-14T20:22:51.002Z"
+}
