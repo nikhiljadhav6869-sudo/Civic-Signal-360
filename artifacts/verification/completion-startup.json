@@ -1,8 +1,8 @@
 {
-  "timestamp_utc": "2026-10-15T14:24:34.807313+00:00",
+  "timestamp_utc": "2026-10-15T18:58:35.078507+00:00",
   "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
   "workspace": "C:\\Users\\Nikhil Jadhav\\OneDrive\\Documents\\ChatGPT\\Civic Signal 360",
-  "data_directory": "C:\\Users\\Nikhil Jadhav\\OneDrive\\Documents\\ChatGPT\\Civic Signal 360\\.runtime\\fresh-start-9ai8tdk1\\data",
+  "data_directory": "C:\\Users\\Nikhil Jadhav\\OneDrive\\Documents\\ChatGPT\\Civic Signal 360\\.runtime\\fresh-start-6ka10zd9\\data",
   "checks": [
     {
       "name": "fresh migrations and synthetic seed",
@@ -48,7 +48,7 @@
     {
       "name": "separate durable worker processes queued scenario",
       "status": "passed",
-      "job_id": "0fd82624-c40d-451c-98b4-da4c321af47b"
+      "job_id": "b9b0fa41-697d-47dc-a696-c7590deaec0d"
     },
     {
       "name": "requested shutdown closes API listener",
@@ -65,6 +65,6 @@
     }
   ],
   "status": "passed",
-  "duration_seconds": 162.59,
-  "service_log": "C:\\Users\\Nikhil Jadhav\\OneDrive\\Documents\\ChatGPT\\Civic Signal 360\\.runtime\\fresh-start-9ai8tdk1\\services.log"
+  "duration_seconds": 59.27,
+  "service_log": "C:\\Users\\Nikhil Jadhav\\OneDrive\\Documents\\ChatGPT\\Civic Signal 360\\.runtime\\fresh-start-6ka10zd9\\services.log"
 }

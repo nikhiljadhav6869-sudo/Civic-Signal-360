@@ -155,9 +155,12 @@ def main():
         stop()
         # Exercise a real startup error: the launcher must fail and reap its worker.
         with socket.socket() as occupied:
-            occupied.bind(("127.0.0.1", port))
+            # A just-closed listener can remain in TIME_WAIT on Linux. Reserve a
+            # fresh port so the test measures the launcher's occupied-port error.
+            occupied.bind(("127.0.0.1", 0))
+            occupied_port = occupied.getsockname()[1]
             occupied.listen()
-            failed = subprocess.run([sys.executable, "scripts/run.py", "--port", str(port)], cwd=ROOT, env=env, stdout=log, stderr=log, timeout=45)
+            failed = subprocess.run([sys.executable, "scripts/run.py", "--port", str(occupied_port)], cwd=ROOT, env=env, stdout=log, stderr=log, timeout=45)
             assert failed.returncode != 0, "Occupied-port startup incorrectly reported success"
         record("occupied-port startup returns failure", exit_code=failed.returncode)
         report["status"] = "passed"
