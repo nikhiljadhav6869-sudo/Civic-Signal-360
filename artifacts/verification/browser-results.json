@@ -1,186 +1,186 @@
 {
   "base": "http://127.0.0.1:8010",
-  "started_at": "2026-10-15T18:42:37.797Z",
+  "started_at": "2026-10-16T04:05:39.827Z",
   "checks": [
     {
       "name": "Landing works with external network denied",
       "status": "passed",
-      "duration_ms": 3602
+      "duration_ms": 1593
     },
     {
       "name": "Command centre viewport 1440",
       "status": "passed",
-      "duration_ms": 1192
+      "duration_ms": 1131
     },
     {
       "name": "Command centre viewport 768",
       "status": "passed",
-      "duration_ms": 1020
+      "duration_ms": 1041
     },
     {
       "name": "Command centre viewport 390",
       "status": "passed",
-      "duration_ms": 940
+      "duration_ms": 939
     },
     {
       "name": "Route /incidents",
       "status": "passed",
-      "duration_ms": 756
+      "duration_ms": 734
     },
     {
       "name": "Route /domains/water",
       "status": "passed",
-      "duration_ms": 777
+      "duration_ms": 845
     },
     {
       "name": "Route /domains/electricity",
       "status": "passed",
-      "duration_ms": 758
+      "duration_ms": 731
     },
     {
       "name": "Route /domains/roads",
       "status": "passed",
-      "duration_ms": 704
+      "duration_ms": 794
     },
     {
       "name": "Route /domains/drainage",
       "status": "passed",
-      "duration_ms": 774
+      "duration_ms": 707
     },
     {
       "name": "Route /domains/waste",
       "status": "passed",
-      "duration_ms": 735
+      "duration_ms": 752
     },
     {
       "name": "Route /domains/streetlights",
       "status": "passed",
-      "duration_ms": 765
+      "duration_ms": 704
     },
     {
       "name": "Route /domains/general",
       "status": "passed",
-      "duration_ms": 721
+      "duration_ms": 745
     },
     {
       "name": "Route /network",
       "status": "passed",
-      "duration_ms": 714
+      "duration_ms": 696
     },
     {
       "name": "Route /forecast",
       "status": "passed",
-      "duration_ms": 779
+      "duration_ms": 718
     },
     {
       "name": "Route /scenarios",
       "status": "passed",
-      "duration_ms": 755
+      "duration_ms": 729
     },
     {
       "name": "Route /demo",
       "status": "passed",
-      "duration_ms": 703
+      "duration_ms": 744
     },
     {
       "name": "Route /cross-domain",
       "status": "passed",
-      "duration_ms": 758
+      "duration_ms": 717
     },
     {
       "name": "Route /impact",
       "status": "passed",
-      "duration_ms": 778
+      "duration_ms": 736
     },
     {
       "name": "Route /lab",
       "status": "passed",
-      "duration_ms": 743
+      "duration_ms": 758
     },
     {
       "name": "Route /report",
       "status": "passed",
-      "duration_ms": 731
+      "duration_ms": 716
     },
     {
       "name": "Route /reports",
       "status": "passed",
-      "duration_ms": 721
+      "duration_ms": 753
     },
     {
       "name": "Route /inspector",
       "status": "passed",
-      "duration_ms": 732
+      "duration_ms": 752
     },
     {
       "name": "Route /notifications",
       "status": "passed",
-      "duration_ms": 762
+      "duration_ms": 731
     },
     {
       "name": "Route /settings",
       "status": "passed",
-      "duration_ms": 735
+      "duration_ms": 714
     },
     {
       "name": "Route /about",
       "status": "passed",
-      "duration_ms": 732
+      "duration_ms": 705
     },
     {
       "name": "Timeline synchronizes observations, map, chart, URL and incident register",
       "status": "passed",
-      "duration_ms": 3410
+      "duration_ms": 3307
     },
     {
       "name": "Network closures reroute, disconnect, reopen and reset without changing cases",
       "status": "passed",
-      "duration_ms": 3164
+      "duration_ms": 2948
     },
     {
       "name": "Network investigation overlays match authorized cases and open evidence",
       "status": "passed",
-      "duration_ms": 2486
+      "duration_ms": 2127
     },
     {
       "name": "Timeline zone filtering has honest empty telemetry and mobile controls",
       "status": "passed",
-      "duration_ms": 2021
+      "duration_ms": 1383
     },
     {
       "name": "Evidence passport opens and exports authorized data",
       "status": "passed",
-      "duration_ms": 1676
+      "duration_ms": 1185
     },
     {
       "name": "Recorded scenario playback steps, pauses, restores and preserves case decisions",
       "status": "passed",
-      "duration_ms": 8795
+      "duration_ms": 7234
     },
     {
       "name": "Supporting team assignment, field access and removal work in the interface",
       "status": "passed",
-      "duration_ms": 12530
+      "duration_ms": 11908
     },
     {
       "name": "Baseline candidate evaluation, administrator promotion and rollback preserve decisions",
       "status": "passed",
-      "duration_ms": 17741
+      "duration_ms": 13417
     },
     {
       "name": "Scenario worker pause survives reload and resumes to a saved result",
       "status": "passed",
-      "duration_ms": 8505
+      "duration_ms": 6893
     },
     {
       "name": "Marathi report submission, receipt download and tracking persist",
       "status": "passed",
-      "duration_ms": 4324
+      "duration_ms": 4003
     },
     {
       "name": "No external runtime dependencies requested",
       "status": "passed",
-      "duration_ms": 1
+      "duration_ms": 0
     },
     {
       "name": "No uncaught browser exceptions",
@@ -191,5 +191,5 @@
   "external_requests": [],
   "console_errors": [],
   "api_errors": [],
-  "finished_at": "2026-10-15T18:44:05.476Z"
+  "finished_at": "2026-10-16T04:06:55.206Z"
 }

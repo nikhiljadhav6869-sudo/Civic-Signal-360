@@ -23,7 +23,16 @@ Zone balance is:
 
 All quantities are litres for the same selected period. A positive storage change means water retained in storage; a negative value means release. Storage change and authorized unmetered use are explicit operator inputs: leave them blank when unknown. If entered, include the source and assumptions. They are not independently verified by the system. A calculated balance requires a confirmed boundary and complete, valid, non-overlapping interval coverage for every selected meter. Otherwise it returns **Unavailable** with reasons. A residual is unexplained water accounting, not a confirmed leak, illegal use or proven saving.
 
-The screen displays the first 100 schedule rows and total status counts. Export the complete JSON review for the full observations, inputs and configuration snapshot. Reviews are not automatically persisted as case evidence. Current configuration does not prove the schedule in force during a historical incident. Meter hierarchy is scoped to this operations configuration; the existing Impact follow-up tool remains a single-meter before/after comparison.
+The screen displays the first 100 schedule rows and total status counts. Export the complete JSON review for the source observations, inputs and configuration snapshot. Reviews accept at most 10,000 input observations, including the one-day lookback needed for overlapping intervals; choose a shorter window when this limit is exceeded. Current configuration does not prove the schedule in force during a historical incident. Meter hierarchy is scoped to this operations configuration; the existing Impact follow-up tool remains a single-meter before/after comparison.
+
+## Save a reviewed snapshot to a case
+
+1. As an authorized operator or administrator, run and inspect the review.
+2. Under **Save to an Evidence Passport**, choose an open water case in the same service zone and explain why this review is relevant.
+3. Select **Attach reviewed snapshot**. The server recomputes the analysis and compares its SHA-256 fingerprint with the result you reviewed. Changed configuration, changed readings or a stale case version cause a conflict, requiring a refreshed review or case selection.
+4. Open the saved Evidence Passport. It includes the exact source observations, configuration, inputs, balance, schedule review, fingerprint, author and reason. Export the saved JSON even after the live configuration changes. The water evidence-gap assistant cites this record as operating context.
+
+If confirmation is lost, keep the page open and choose **Retry exact attachment**. The original request identifier returns the saved record without creating another evidence or audit entry, even if the live configuration has changed. Pending attachments are held only on the current page; reload/navigation recovery is not provided for this workflow. A saved review is analytical context, not a field inspection, independently verified supply history or proof of leakage. It does not change the case status or satisfy the inspection/intervention/follow-up requirements for resolution. Closed/resolved cases must first be reopened through the normal human review workflow. Existing evidence JSON storage is reused; no new migration is required.
 
 ## Domain-specific field observations
 
@@ -38,6 +47,7 @@ The water Evidence assistant adds an evidence-gap table for quantities, supply c
 - `GET /api/v1/water/zones/{zone_id}/operations`
 - `PUT /api/v1/water/zones/{zone_id}/operations` (administrator, versioned)
 - `POST /api/v1/water/zones/{zone_id}/review` (authorized operator/administrator)
+- `POST /api/v1/water/zones/{zone_id}/cases/{case_id}/reviews` (scoped operator/administrator, versioned and idempotent)
 - `GET /api/v1/cases/{case_id}/field-schema` (authorized case access)
 
-See `tests/test_water_operations.py`, `tests/test_field_observations.py`, `scripts/water-investigation.test.mjs` and `scripts/completion-browser-check.mjs`. The browser acceptance suite uses an isolated demo database and labelled synthetic reports; it is not municipal field validation.
+See `tests/test_water_operations.py`, `tests/test_water_review_evidence.py`, `tests/test_field_observations.py`, `scripts/water-investigation.test.mjs`, `scripts/water-review-evidence-check.mjs` and `scripts/completion-browser-check.mjs`. Browser acceptance uses an isolated demo database and labelled synthetic reports; it is not municipal field validation.

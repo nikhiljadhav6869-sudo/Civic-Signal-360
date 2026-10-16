@@ -2,6 +2,14 @@
 
 Updated 16 October 2026. Only executed checks are marked passed.
 
+## Saved water-review evidence verification
+
+On 16 October, the updated local source passed **202 Python tests** in 96.84 seconds (four known dependency/sample-size warnings), **44 JavaScript logic tests**, ESLint, TypeScript compilation and the production build (2,230 transformed modules). The existing **8 completion journeys** and **37 browser regression checks** also passed against the isolated preview on port 8010.
+
+The new `scripts/water-review-evidence-check.mjs` passed **3 browser checks** with no uncaught page errors: a response deliberately lost after server commit followed by an exact retry creates one evidence/audit record; Evidence Passport displays and exports the exact snapshot at desktop/mobile widths; a changed configuration rejects stale attachment without altering saved evidence. Results: `artifacts/verification/water-review-evidence.json`. Backend tests additionally cover permissions, cross-zone/domain rejection, changed source readings, stale case versions, altered duplicate requests, whitespace-only reasons and closed cases. Saved analytical context does not satisfy field-inspection/follow-up checks or change the case decision.
+
+The workflow now includes this journey in the hosted PostgreSQL job. The hosted run listed in the earlier completion section below predates this feature; it is not evidence for the new endpoint until a new run completes.
+
 ## Current completion verification
 
 | Check | Actual result | Evidence |

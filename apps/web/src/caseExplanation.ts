@@ -52,7 +52,7 @@ export function explainCase(record: CaseRecord, question: EvidenceQuestion): Exp
     const reports = record.corroboration?.reports || 0;
     const reporters = record.corroboration?.unique_reporters || 0;
     points.push(`${reports} linked report(s) come from ${reporters} distinct account(s). Distinct accounts are observation sources, not proof of a fault.`);
-    points.push(`${fieldRecords.length} inspection/intervention evidence record(s) are attached${fieldRecords.length ? ` (${fieldRecords.map(item => item.kind || 'evidence').join(', ')})` : ''}.`);
+    points.push(`${fieldRecords.length} evidence record(s) are attached${fieldRecords.length ? ` (${fieldRecords.map(item => item.kind || 'evidence').join(', ')})` : ''}.`);
   } else if (question === 'uncertainty') {
     title = 'What remains uncertain';
     const limitations = Array.isArray(evidence.limitations) ? evidence.limitations.filter((value): value is string => typeof value === 'string') : [];

@@ -50,6 +50,8 @@
 /* Water review controls retain readable tables and a single-column mobile form. */
 .water-operations{padding:24px;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
 .water-operations>*{min-width:0}
+.water-review-attachment,.saved-water-review{display:grid;gap:12px;border-top:1px solid var(--line);margin-top:20px;padding:18px 0;min-width:0;overflow-wrap:anywhere}
+.water-review-attachment fieldset{display:grid;gap:12px}.saved-water-review code{font-size:10px;overflow-wrap:anywhere}
 .water-operations>label,.water-operations label{display:grid;gap:6px}
 .water-operations fieldset{min-width:0;border:1px solid var(--border,#29414d);border-radius:10px;padding:14px}
 .water-operations legend{padding:0 8px;font-weight:600}

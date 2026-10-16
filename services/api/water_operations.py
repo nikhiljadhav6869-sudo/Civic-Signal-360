@@ -1,5 +1,7 @@
 """Versioned, zone-scoped water operations with explicit accounting boundaries."""
 from datetime import datetime, timedelta, timezone
+import hashlib
+import json
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -7,8 +9,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from sqlalchemy import update
 
 from .database import get_db
-from .domain import audit
-from .models import Asset, Configuration, Reading, Zone
+from .domain import audit, case_access, mutate_case
+from .models import Asset, Configuration, Evidence, Reading, Zone, uid
 from .security import current_user, in_scope, require_admin, require_staff
 from services.analytics.water_operations import instant, schedule_review, water_balance
 
@@ -153,12 +155,64 @@ def review_operations(zone_id: str, body: ReviewInput, user=Depends(current_user
     assets = db.query(Asset).filter_by(zone_id=zone_id, domain="water").all()
     meter_ids = [a.id for a in assets if "meter" in a.kind.lower()]
     # Query with a one-day margin; valid input intervals cannot exceed one day.
-    readings = db.query(Reading).filter(Reading.asset_id.in_(meter_ids), Reading.domain == "water", Reading.timestamp >= (body.start-timedelta(days=1)).isoformat(), Reading.timestamp < body.end.isoformat()).all()
+    readings = db.query(Reading).filter(Reading.asset_id.in_(meter_ids), Reading.domain == "water", Reading.timestamp >= (body.start-timedelta(days=1)).isoformat(), Reading.timestamp < body.end.isoformat()).order_by(Reading.timestamp, Reading.id).limit(10001).all()
+    if len(readings) > 10000:
+        raise HTTPException(422, "This review exceeds 10,000 input observations. Choose a shorter window.")
     rows = [{key: getattr(r, key) for key in ("id", "asset_id", "timestamp", "interval_minutes", "quantity", "unit", "source", "quality_flag")} for r in readings]
     selected = [r for r in rows if instant(r["timestamp"]) >= body.start]
     schedule = schedule_review(selected, config)
     balance = water_balance(rows, config, body.start, body.end, body.storage_change_l, body.authorized_unmetered_l)
-    return {"zone_id": zone_id, "configuration_version": config["version"], "window": {"start": body.start.isoformat(), "end_exclusive": body.end.isoformat()}, "schedule": schedule,
+    result = {"schema": "water_operations_review_v1", "zone_id": zone_id, "configuration_version": config["version"], "window": {"start": body.start.isoformat(), "end_exclusive": body.end.isoformat()}, "schedule": schedule,
             "schedule_counts": {state: sum(r["status"] == state for r in schedule) for state in sorted({r["status"] for r in schedule})},
             "balance": balance, "accounting_input_provenance": "User-supplied; not independently verified", "accounting_note": body.accounting_note,
-            "configuration_snapshot": config, "requires_human_review": True}
+            "configuration_snapshot": config, "review_inputs": body.model_dump(mode="json"), "source_observations": rows, "requires_human_review": True}
+    return {**result, "snapshot_hash": fingerprint(result)}
+
+
+def fingerprint(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")).hexdigest()
+
+
+class AttachReviewInput(Strict):
+    review: ReviewInput
+    snapshot_hash: str = Field(pattern=r"^[a-f0-9]{64}$")
+    case_version: int = Field(ge=1)
+    reason: str = Field(min_length=5, max_length=2000)
+    idempotency_key: str = Field(min_length=8, max_length=100)
+
+    @field_validator("reason")
+    @classmethod
+    def meaningful_reason(cls, value):
+        if len(value.strip()) < 5:
+            raise ValueError("Explain why this review is relevant to the case.")
+        return value.strip()
+
+
+@router.post("/zones/{zone_id}/cases/{case_id}/reviews")
+def attach_review(zone_id: str, case_id: str, body: AttachReviewInput, user=Depends(current_user), db=Depends(get_db)):
+    access(db, user, zone_id)
+    case = case_access(db, user, case_id)
+    if case.domain != "water" or case.zone_id != zone_id:
+        raise HTTPException(422, "Choose a water case in this review's service zone.")
+    request_hash = fingerprint(body.model_dump(mode="json"))
+    previous = db.query(Evidence).filter_by(case_id=case_id, actor_id=user.id, idempotency_key=body.idempotency_key).first()
+    if previous:
+        if previous.kind != "water_review" or previous.content_hash != request_hash:
+            raise HTTPException(409, "This submission identifier already belongs to different evidence.")
+        return {"evidence_id": previous.id, "case_id": case.id, "case_version": case.version, "snapshot_hash": body.snapshot_hash, "duplicate": True}
+    if case.status in {"resolved", "closed"}:
+        raise HTTPException(409, "Reopen this case through human review before attaching new evidence.")
+    if case.version != body.case_version:
+        raise HTTPException(409, "This case changed. Refresh the case before attaching the review.")
+    # Recompute on the server: never trust a browser-supplied analysis or silently
+    # replace the reviewed result with newer readings/configuration.
+    snapshot = review_operations(zone_id, body.review, user, db)
+    if snapshot["snapshot_hash"] != body.snapshot_hash:
+        raise HTTPException(409, "The source observations or configuration changed. Run and review the analysis again.")
+    record = Evidence(id=uid(), case_id=case.id, actor_id=user.id, kind="water_review", notes=body.reason,
+                      observations={"water_review": snapshot}, content_hash=request_hash, idempotency_key=body.idempotency_key)
+    mutate_case(db, user, case, body.case_version, "water_review_attached", body.reason, evidence_ids=[record.id],
+                audit_after={"snapshot_hash": snapshot["snapshot_hash"], "configuration_version": snapshot["configuration_version"], "window": snapshot["window"]})
+    db.add(record)
+    db.commit()
+    return {"evidence_id": record.id, "case_id": case.id, "case_version": case.version, "snapshot_hash": snapshot["snapshot_hash"], "duplicate": False}

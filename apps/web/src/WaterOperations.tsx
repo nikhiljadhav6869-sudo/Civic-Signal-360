@@ -1,4 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
+import {AttachWaterReview, type WaterReviewSnapshot} from './WaterReviewEvidence';
+import {type CivicCase} from './api';
 import {api, dateTimeLocalToIso, dateTimeLocalValue, download, fmt, getDisplayTimezoneLabel, send} from './api';
 import {ErrorBox, Loading, SectionHead} from './components';
 import {useInterfaceLanguage} from './uiLanguage';
@@ -9,12 +11,12 @@ type WaterAsset = {id:string;name:string;kind:string;provenance:string};
 type Operations = {configuration:WaterConfig;assets:WaterAsset[];latest_end:string|null};
 type ScheduleRow = {reading_id:string;asset_id:string;timestamp:string;status:string;explanation:string;volume_l:number|null};
 type MeterTotal = {role:string;status:string;total_l:number|null;issues:string[];sources:string[]};
-type Review = {configuration_version:number;window:{start:string;end_exclusive:string};schedule:ScheduleRow[];schedule_counts:Record<string,number>;balance:{status:string;unaccounted_l:number|null;inlet_l:number|null;outlet_l:number|null;consumption_l:number|null;meters:Record<string,MeterTotal>;issues:string[];interpretation:string}};
+type Review = WaterReviewSnapshot & {configuration_version:number;window:{start:string;end_exclusive:string};schedule:ScheduleRow[];schedule_counts:Record<string,number>;balance:{status:string;unaccounted_l:number|null;inlet_l:number|null;outlet_l:number|null;consumption_l:number|null;meters:Record<string,MeterTotal>;issues:string[];interpretation:string}};
 const message = (error:unknown) => error instanceof Error ? error.message : 'Unable to complete the request.';
 const clock = (minutes:number) => `${String(Math.floor(minutes/60)%24).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`;
 const minutes = (value:string) => value.split(':').map(Number).reduce((h,m)=>h*60+m);
 
-export function WaterOperations() {
+export function WaterOperations({onOpenCase}:{onOpenCase:(item:CivicCase)=>void}) {
   const mr = useInterfaceLanguage()==='mr';
   const t = (en:string, marathi:string) => mr ? marathi : en;
   const [zones,setZones] = useState<Array<{id:string;name:string}>>([]);
@@ -107,6 +109,7 @@ export function WaterOperations() {
         <SectionHead title={t('Schedule context','वेळापत्रकाचा संदर्भ')}/>
         <p>{Object.entries(result.schedule_counts).map(([state,n])=>`${statuses[state]||state.replaceAll('_',' ')}: ${n}`).join(' · ')||t('No observations in this window.','या कालावधीत मोजमापे नाहीत.')}</p>
         <div className="table-scroll"><table><caption>{t('First 100 observations. Export includes the complete review. Intervals crossing a schedule boundary are not split into invented volumes.','पहिली १०० मोजमापे. निर्यातीमध्ये पूर्ण आढावा आहे. वेळेची सीमा ओलांडणाऱ्या मोजमापांचे काल्पनिक विभाजन केले जात नाही.')}</caption><thead><tr><th>{t('Observation (UTC)','मोजमाप (UTC)')}</th><th>{t('Meter','मीटर')}</th><th>{t('Volume · L','प्रमाण · लिटर')}</th><th>{t('Review state','तपासणी स्थिती')}</th></tr></thead><tbody>{result.schedule.slice(0,100).map(r=><tr key={r.reading_id}><td>{r.timestamp}</td><td>{r.asset_id}</td><td>{r.volume_l===null?'—':fmt(r.volume_l,2)}</td><td title={r.explanation}>{statuses[r.status]||r.status.replaceAll('_',' ')}</td></tr>)}</tbody></table></div>
+        <AttachWaterReview key={result.snapshot_hash} snapshot={result} onOpenCase={onOpenCase}/>
         <button className="button secondary" onClick={()=>download(result,'water-review-'+zone+'.json')}>{t('Export review JSON','आढावा JSON निर्यात करा')}</button>
       </div>}
     </>}
