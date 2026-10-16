@@ -1,7 +1,7 @@
 {
   "checks": [
     {
-      "name": "Lost confirmation retries the exact attachment without duplicate evidence or decision changes",
+      "name": "Lost confirmation survives an opted-in reload and retries the exact attachment without duplicate evidence or decision changes",
       "status": "passed"
     },
     {

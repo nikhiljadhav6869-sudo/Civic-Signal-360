@@ -1,3 +1,5 @@
+import {WaterHistory, type ScheduleHistory} from './WaterHistory';
+import {WaterGroupComparison} from './WaterGroupComparison';
 import {useEffect, useRef, useState} from 'react';
 import {AttachWaterReview, type WaterReviewSnapshot} from './WaterReviewEvidence';
 import {type CivicCase} from './api';
@@ -8,7 +10,7 @@ import {useInterfaceLanguage} from './uiLanguage';
 type SupplyWindow = {days:number[]; start_minute:number; end_minute:number; label:string};
 type WaterConfig = {version:number; timezone:'Asia/Kolkata'|'UTC'; supply_windows:SupplyWindow[]; exceptions:SupplyWindow[]; outside_rate_lph:number; inlet_ids:string[]; outlet_ids:string[]; consumption_ids:string[]; meter_parents:Record<string,string>; boundary_confirmed:boolean};
 type WaterAsset = {id:string;name:string;kind:string;provenance:string};
-type Operations = {configuration:WaterConfig;assets:WaterAsset[];latest_end:string|null};
+type Operations = {zone_id:string;schedule_history:ScheduleHistory;configuration:WaterConfig;assets:WaterAsset[];latest_end:string|null};
 type ScheduleRow = {reading_id:string;asset_id:string;timestamp:string;status:string;explanation:string;volume_l:number|null};
 type MeterTotal = {role:string;status:string;total_l:number|null;issues:string[];sources:string[]};
 type Review = WaterReviewSnapshot & {configuration_version:number;window:{start:string;end_exclusive:string};schedule:ScheduleRow[];schedule_counts:Record<string,number>;balance:{status:string;unaccounted_l:number|null;inlet_l:number|null;outlet_l:number|null;consumption_l:number|null;meters:Record<string,MeterTotal>;issues:string[];interpretation:string}};
@@ -22,6 +24,7 @@ export function WaterOperations({onOpenCase}:{onOpenCase:(item:CivicCase)=>void}
   const [zones,setZones] = useState<Array<{id:string;name:string}>>([]);
   const [zone,setZone] = useState('');
   const [admin,setAdmin] = useState(false);
+  const [userId,setUserId]=useState('');
   const [value,setValue] = useState<Operations|null>(null);
   const [config,setConfig] = useState<WaterConfig|null>(null);
   const [reason,setReason] = useState('');
@@ -33,10 +36,11 @@ export function WaterOperations({onOpenCase}:{onOpenCase:(item:CivicCase)=>void}
   const [storage,setStorage] = useState('');
   const [unmetered,setUnmetered] = useState('');
   const [note,setNote] = useState('');
+  const [scheduleMode,setScheduleMode]=useState<'current'|'historical'>('current');
   const [result,setResult] = useState<Review|null>(null);
   const [revision,setRevision] = useState(0);
   const generation=useRef(0);
-  useEffect(()=>{let active=true;api('/bootstrap').then(data=>{if(!active)return;setZones(data.zones);setAdmin(data.user.role==='admin');setZone(data.zones[0]?.id||'')}).catch(e=>{if(active)setError(message(e))});return()=>{active=false}},[]);
+  useEffect(()=>{let active=true;api('/bootstrap').then(data=>{if(!active)return;setZones(data.zones);setAdmin(data.user.role==='admin');setUserId(data.user.id);setZone(data.zones[0]?.id||'')}).catch(e=>{if(active)setError(message(e))});return()=>{active=false}},[]);
   useEffect(()=>{
     const id=++generation.current;setValue(null);setConfig(null);setResult(null);setError('');setNotice('');setReason('');setStorage('');setUnmetered('');setNote('');setBusy(false);
     if(!zone)return;
@@ -51,7 +55,7 @@ export function WaterOperations({onOpenCase}:{onOpenCase:(item:CivicCase)=>void}
   };
   const review=async()=>{
     if(!config)return;const id=generation.current;setBusy(true);setError('');setResult(null);
-    try{const output=await send('/water/zones/'+zone+'/review',{start:dateTimeLocalToIso(start),end:dateTimeLocalToIso(end),configuration_version:config.version,storage_change_l:storage===''?null:Number(storage),authorized_unmetered_l:unmetered===''?null:Number(unmetered),accounting_note:note});if(id===generation.current)setResult(output)}catch(e){if(id===generation.current)setError(message(e))}finally{if(id===generation.current)setBusy(false)}
+    try{const output=await send('/water/zones/'+zone+'/review',{start:dateTimeLocalToIso(start),end:dateTimeLocalToIso(end),configuration_version:config.version,storage_change_l:storage===''?null:Number(storage),authorized_unmetered_l:unmetered===''?null:Number(unmetered),accounting_note:note,schedule_mode:scheduleMode,history_version:scheduleMode==='historical'?value?.schedule_history.version:null});if(id===generation.current)setResult(output)}catch(e){if(id===generation.current)setError(message(e))}finally{if(id===generation.current)setBusy(false)}
   };
   const windowEditor=(key:'supply_windows'|'exceptions',title:string)=>{
     if(!config)return null;
@@ -66,7 +70,7 @@ export function WaterOperations({onOpenCase}:{onOpenCase:(item:CivicCase)=>void}
       </div>;
     })}<button className="button secondary" type="button" disabled={config[key].length>=21} onClick={()=>update({[key]:[...config[key],{days:[0,1,2,3,4,5,6],start_minute:360,end_minute:480,label:key==='exceptions'?'Legitimate use':'Scheduled supply'}]})}>{t('Add window','वेळ जोडा')}</button></fieldset>;
   };
-  const statuses:Record<string,string> = mr?{within_window:'नियोजित वेळेत',straddles_window:'वेळेची सीमा ओलांडते',review_outside_window:'नियोजित वेळेबाहेरील प्रवाह तपासा',below_review_threshold:'तपासणी मर्यादेपेक्षा कमी',data_quality:'माहितीची गुणवत्ता',not_configured:'वेळापत्रक नाही'}:{};
+  const statuses:Record<string,string> = mr?{within_window:'नियोजित वेळेत',straddles_window:'वेळेची सीमा ओलांडते',review_outside_window:'नियोजित वेळेबाहेरील प्रवाह तपासा',below_review_threshold:'तपासणी मर्यादेपेक्षा कमी',history_missing:'ऐतिहासिक वेळापत्रक नाही',history_boundary:'ऐतिहासिक कालावधीची सीमा',data_quality:'माहितीची गुणवत्ता',not_configured:'वेळापत्रक नाही'}:{};
   const meters=value?.assets.filter(a=>a.kind.toLowerCase().includes('meter'))||[];
   return <section className="panel spaced water-operations" aria-labelledby="water-operations-title">
     <h2 id="water-operations-title">{t('Water operations review','पाणीपुरवठा आढावा')}</h2>
@@ -99,6 +103,7 @@ export function WaterOperations({onOpenCase}:{onOpenCase:(item:CivicCase)=>void}
       </div><label>{t('Source and assumptions for supplied accounting values','दिलेल्या हिशेबाच्या आकड्यांचा स्रोत व गृहितके')}<textarea value={note} maxLength={2000} onChange={e=>{setNote(e.target.value);setResult(null)}}/></label>
       <p className="helper">{t('Leave unknown quantities blank. Enter zero only when supported. A maximum of 31 days can be reviewed; no missing interval volume is estimated.','अज्ञात प्रमाण रिकामे ठेवा. पुरावा असल्यासच शून्य लिहा. जास्तीत जास्त ३१ दिवस तपासता येतात; गहाळ मोजमापाचा अंदाज भरला जात नाही.')}</p>
       {dirty&&<p role="status">{t('Save configuration changes before reviewing readings.','मोजमाप तपासण्यापूर्वी संरचनेतील बदल जतन करा.')}</p>}
+      <label>{t('Schedule context to review','तपासण्यासाठी वेळापत्रकाचा संदर्भ')}<select aria-label={t('Schedule context to review','तपासण्यासाठी वेळापत्रकाचा संदर्भ')} disabled={busy} value={scheduleMode} onChange={e=>{setScheduleMode(e.target.value as typeof scheduleMode);setResult(null)}}><option value="current">{t('Current configuration (not historical proof)','सध्याची संरचना (ऐतिहासिक पुरावा नाही)')}</option><option value="historical">{t('Recorded effective schedules','नोंदवलेली लागू वेळापत्रके')}</option></select></label>
       <button className="button primary" disabled={busy||dirty||!start||!end} onClick={review}>{busy?t('Working…','प्रक्रिया सुरू…'):t('Review water observations','पाण्याची मोजमापे तपासा')}</button></div>
       {result&&<div aria-live="polite">
         <SectionHead title={t('Accounting result','हिशेबाचा निकाल')}/>
@@ -107,11 +112,14 @@ export function WaterOperations({onOpenCase}:{onOpenCase:(item:CivicCase)=>void}
         <ul>{result.balance.issues.map(issue=><li key={issue}>{issue}</li>)}</ul>
         <div className="table-scroll"><table><thead><tr><th>{t('Meter','मीटर')}</th><th>{t('Volume · L','प्रमाण · लिटर')}</th><th>{t('Coverage / issues','माहितीची व्याप्ती / अडचणी')}</th></tr></thead><tbody>{Object.entries(result.balance.meters).map(([id,m])=><tr key={id}><td>{value.assets.find(a=>a.id===id)?.name||id}</td><td>{m.total_l===null?'—':fmt(m.total_l,2)}</td><td>{m.issues.length?m.issues.join(' '):t('Complete selected window','निवडलेल्या कालावधीची पूर्ण माहिती')}</td></tr>)}</tbody></table></div>
         <SectionHead title={t('Schedule context','वेळापत्रकाचा संदर्भ')}/>
+        <p className="helper">{result.schedule_mode==='historical'?t('Using recorded effective schedules. Missing history remains unknown; accounting still uses the reviewed current meter boundary.','नोंदवलेली लागू वेळापत्रके वापरली आहेत. इतिहासातील रिकामा कालावधी अज्ञात राहतो; हिशेबासाठी तपासलेली सध्याची मीटर सीमा वापरली जाते.'):t('Using the current configuration; this does not establish historical supply.','सध्याची संरचना वापरली आहे; त्यामुळे ऐतिहासिक पुरवठा सिद्ध होत नाही.')}</p>
         <p>{Object.entries(result.schedule_counts).map(([state,n])=>`${statuses[state]||state.replaceAll('_',' ')}: ${n}`).join(' · ')||t('No observations in this window.','या कालावधीत मोजमापे नाहीत.')}</p>
         <div className="table-scroll"><table><caption>{t('First 100 observations. Export includes the complete review. Intervals crossing a schedule boundary are not split into invented volumes.','पहिली १०० मोजमापे. निर्यातीमध्ये पूर्ण आढावा आहे. वेळेची सीमा ओलांडणाऱ्या मोजमापांचे काल्पनिक विभाजन केले जात नाही.')}</caption><thead><tr><th>{t('Observation (UTC)','मोजमाप (UTC)')}</th><th>{t('Meter','मीटर')}</th><th>{t('Volume · L','प्रमाण · लिटर')}</th><th>{t('Review state','तपासणी स्थिती')}</th></tr></thead><tbody>{result.schedule.slice(0,100).map(r=><tr key={r.reading_id}><td>{r.timestamp}</td><td>{r.asset_id}</td><td>{r.volume_l===null?'—':fmt(r.volume_l,2)}</td><td title={r.explanation}>{statuses[r.status]||r.status.replaceAll('_',' ')}</td></tr>)}</tbody></table></div>
-        <AttachWaterReview key={result.snapshot_hash} snapshot={result} onOpenCase={onOpenCase}/>
         <button className="button secondary" onClick={()=>download(result,'water-review-'+zone+'.json')}>{t('Export review JSON','आढावा JSON निर्यात करा')}</button>
       </div>}
+      <AttachWaterReview key={userId+':'+zone} snapshot={result} userId={userId} zone={zone} onOpenCase={onOpenCase}/>
+      <WaterHistory key={zone} zone={zone} history={value.schedule_history} configurationVersion={config.version} admin={admin} dirty={dirty} latestEnd={value.latest_end} onChange={history=>{setValue(v=>v?.zone_id===zone?{...v,schedule_history:history}:v);setResult(null)}}/>
+      <WaterGroupComparison key={zone+'-'+config.version} zone={zone} configuration={config} assets={meters} latestEnd={value.latest_end} dirty={dirty}/>
     </>}
   </section>;
 }

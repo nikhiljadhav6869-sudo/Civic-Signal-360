@@ -50,7 +50,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - name: Clear checked-in local results before recording this runner
-        run: rm -f -- artifacts/verification/completion-browser.json artifacts/verification/browser-results.json artifacts/verification/water-review-evidence.json
+        run: rm -f -- artifacts/verification/completion-browser.json artifacts/verification/browser-results.json artifacts/verification/water-review-evidence.json artifacts/verification/water-history.json
       - name: Build and start disposable PostgreSQL demo stack
         run: docker compose up --build --wait --wait-timeout 240
       - name: All seven human review workflows and water operations
@@ -59,6 +59,8 @@ jobs:
         run: node scripts/water-review-evidence-check.mjs
       - name: Browser regression checks (sequential; shared test database)
         run: node scripts/browser-check.mjs
+      - name: Historical supply records and multi-meter comparison
+        run: node scripts/water-history-check.mjs
       - name: Preserve PostgreSQL evidence across application restart
         shell: bash
         run: |
@@ -80,6 +82,7 @@ jobs:
             artifacts/verification/completion-browser.json
             artifacts/verification/browser-results.json
             artifacts/verification/water-review-evidence.json
+            artifacts/verification/water-history.json
       - name: Remove disposable CI containers and volumes
         if: always()
         run: docker compose down --volumes

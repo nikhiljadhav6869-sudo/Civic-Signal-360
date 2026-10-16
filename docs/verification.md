@@ -2,6 +2,14 @@
 
 Updated 16 October 2026. Only executed checks are marked passed.
 
+## Historical water context, group comparison and reload recovery
+
+Local verification on 16 October passed **208 Python tests** in 136.12 seconds (four known warnings), **46 JavaScript tests**, ESLint, TypeScript compilation and production build (2,233 modules). The isolated preview passed **52 browser checks**: eight completion journeys, 37 regression checks, three saved-review journeys including consent-based reload recovery, and four new history/comparison journeys. The latter verify frozen effective schedules, correction/gap semantics, exact two-meter totals/exports, incomplete-window rejection, Marathi controls and 390/768/1440 layouts. Results are in `artifacts/verification/water-history.json` and `water-review-evidence.json`.
+
+An initial history test created a new service zone, correctly causing the existing operator's all-zone scenario/baseline authorization to fail. The fixture now uses the existing River Ward, independent synthetic assets, retained audit history and configuration restoration. The full suites passed on a fresh isolated database at `.runtime/water-completion-preview`; the previous `.runtime/completion-preview` database was preserved. An earlier dropdown locator failure was fixed with explicit accessible names. Neither unsuccessful run is counted as a pass.
+
+The new checks are included in GitHub Actions; the hosted results below precede these latest additions until a new run is recorded.
+
 ## Saved water-review evidence verification
 
 On 16 October, the updated local source passed **202 Python tests** in 96.84 seconds (four known dependency/sample-size warnings), **44 JavaScript logic tests**, ESLint, TypeScript compilation and the production build (2,230 transformed modules). The existing **8 completion journeys** and **37 browser regression checks** also passed against the isolated preview on port 8010.
