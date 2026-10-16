@@ -8,7 +8,7 @@ On 16 October, the updated local source passed **202 Python tests** in 96.84 sec
 
 The new `scripts/water-review-evidence-check.mjs` passed **3 browser checks** with no uncaught page errors: a response deliberately lost after server commit followed by an exact retry creates one evidence/audit record; Evidence Passport displays and exports the exact snapshot at desktop/mobile widths; a changed configuration rejects stale attachment without altering saved evidence. Results: `artifacts/verification/water-review-evidence.json`. Backend tests additionally cover permissions, cross-zone/domain rejection, changed source readings, stale case versions, altered duplicate requests, whitespace-only reasons and closed cases. Saved analytical context does not satisfy field-inspection/follow-up checks or change the case decision.
 
-The workflow now includes this journey in the hosted PostgreSQL job. The hosted run listed in the earlier completion section below predates this feature; it is not evidence for the new endpoint until a new run completes.
+Both jobs passed in [GitHub run 38849080098](https://github.com/nikhiljadhav6869-sudo/Civic-Signal-360/actions/runs/38849080098) for source `1b69f20f637b4476640e3f01644737000412c054`. The clean Linux job verified installation, all suites, lint/build and startup checks. Docker/PostgreSQL verified all eight completion journeys, the three new saved-review journeys, 37 browser regression checks and evidence persistence after application restart. The recorded run and step outcomes are in `artifacts/verification/water-review-ci.json`. Docker remains unavailable locally; this PostgreSQL evidence is from the hosted Ubuntu runner.
 
 ## Current completion verification
 
