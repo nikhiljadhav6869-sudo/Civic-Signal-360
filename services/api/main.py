@@ -528,6 +528,7 @@ def network(user=Depends(current_user), db=Depends(get_db)):
     ids = {n["id"] for n in nodes}
     network["nodes"] = nodes
     network["edges"] = [e for e in network.get("edges", []) if e["source"] in ids and e["target"] in ids]
+    network["configuration_hash"] = hashlib.sha256(json.dumps({"nodes": network["nodes"], "edges": network["edges"]}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     network["limitation"] = "Topology only. Hydraulic result unavailable; connectivity does not determine pressure or delivered volume."
     return network
 
@@ -569,6 +570,112 @@ def path(body: PathBody, user=Depends(current_user), db=Depends(get_db)):
     authorized_ids = {n["id"] for n in authorized_network.get("nodes", [])}
     result["reachable"] = [ident for ident in result.get("reachable", []) if ident in authorized_ids]
     return result
+
+
+class SavedNetworkInput(StrictModel):
+    name: str = Field(min_length=3, max_length=120)
+    reason: str = Field(min_length=5, max_length=2000)
+    inputs: PathBody
+    configuration_hash: str = Field(pattern=r"^[a-f0-9]{64}$")
+    idempotency_key: str = Field(min_length=8, max_length=100)
+
+    @field_validator("name", "reason")
+    @classmethod
+    def meaningful(cls, value, info):
+        if len(value.strip()) < (5 if info.field_name == "reason" else 3):
+            raise ValueError("Enter a meaningful scenario name and reason.")
+        return value.strip()
+
+
+def saved_network_row(db, user, ident):
+    require_staff(user)
+    row = db.get(Configuration, "network-scenario:" + user.id + ":" + ident)
+    if not row or row.value.get("owner_id") != user.id:
+        raise HTTPException(404, "Saved network scenario not found.")
+    return row
+
+
+def network_scenario_dict(row):
+    return {"id": row.key.rsplit(":", 1)[-1], "version": row.version, **{key: value for key, value in row.value.items() if key not in {"request_hash", "owner_id"}}}
+
+
+@app.get("/api/v1/network/scenarios")
+def list_network_scenarios(user=Depends(current_user), db=Depends(get_db)):
+    require_staff(user)
+    current = network(user, db)
+    output = []
+    rows = db.query(Configuration).filter(Configuration.key.startswith("network-scenario:"+user.id+":", autoescape=True)).order_by(Configuration.key).limit(200).all()
+    for row in rows:
+        if row.value.get("owner_id") != user.id:
+            continue
+        try:
+            path(PathBody(**row.value["inputs"]), user, db)
+        except HTTPException:
+            continue
+        output.append({**network_scenario_dict(row), "topology_changed": row.value["configuration_hash"] != current["configuration_hash"]})
+    return sorted(output, key=lambda item: item["created_at"], reverse=True)
+
+
+@app.post("/api/v1/network/scenarios")
+def save_network_scenario(body: SavedNetworkInput, user=Depends(current_user), db=Depends(get_db)):
+    require_staff(user)
+    path(body.inputs, user, db)
+    if len(set(body.inputs.closed_edges)) != len(body.inputs.closed_edges):
+        raise HTTPException(422, "Select each closed pipe once.")
+    ident = hashlib.sha256((user.id+":"+body.idempotency_key).encode()).hexdigest()
+    key = "network-scenario:"+user.id+":"+ident
+    request_hash = hashlib.sha256(json.dumps(body.model_dump(), sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    previous = db.get(Configuration, key)
+    if previous:
+        if previous.value["request_hash"] != request_hash:
+            raise HTTPException(409, "This submission identifier belongs to a different scenario.")
+        return {**network_scenario_dict(previous), "duplicate": True}
+    if body.configuration_hash != network(user, db)["configuration_hash"]:
+        raise HTTPException(409, "Network configuration or permissions changed. Reload and review the topology before saving.")
+    if db.query(Configuration).filter(Configuration.key.startswith("network-scenario:"+user.id+":", autoescape=True)).count() >= 200:
+        raise HTTPException(422, "This prototype retains at most 200 named scenarios per account.")
+    value = {"owner_id": user.id, "name": body.name, "reason": body.reason, "inputs": body.inputs.model_dump(), "configuration_hash": body.configuration_hash,
+             "request_hash": request_hash, "created_at": now(), "archived": False}
+    row = Configuration(key=key, version=1, value=value)
+    db.add(row)
+    audit(db, user, None, "network_scenario_saved", body.reason, after={"scenario_id": ident, "configuration_hash": body.configuration_hash})
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(409, "A concurrent save completed. Retry the same submission identifier.") from exc
+    return {**network_scenario_dict(row), "duplicate": False}
+
+
+@app.get("/api/v1/network/scenarios/{scenario_id}")
+def load_network_scenario(scenario_id: str, user=Depends(current_user), db=Depends(get_db)):
+    row = saved_network_row(db, user, scenario_id)
+    path(PathBody(**row.value["inputs"]), user, db)
+    if row.value["archived"]:
+        raise HTTPException(409, "Restore the archived scenario before loading it.")
+    if row.value["configuration_hash"] != network(user, db)["configuration_hash"]:
+        raise HTTPException(409, "Network configuration or permissions changed. Review the current topology and save a new scenario.")
+    return network_scenario_dict(row)
+
+
+class NetworkArchiveInput(StrictModel):
+    version: int = Field(ge=1)
+    archived: bool
+    reason: str = Field(min_length=5, max_length=2000)
+
+
+@app.post("/api/v1/network/scenarios/{scenario_id}/archive")
+def archive_network_scenario(scenario_id: str, body: NetworkArchiveInput, user=Depends(current_user), db=Depends(get_db)):
+    row = saved_network_row(db, user, scenario_id)
+    if len(body.reason.strip()) < 5:
+        raise HTTPException(422, "Explain the archive or restore action.")
+    value = {**row.value, "archived": body.archived, "updated_at": now()}
+    changed = db.execute(update(Configuration).where(Configuration.key == row.key, Configuration.version == body.version).values(value=value, version=body.version+1))
+    if changed.rowcount != 1:
+        raise HTTPException(409, "This saved scenario changed. Refresh before updating it.")
+    audit(db, user, None, "network_scenario_archived" if body.archived else "network_scenario_restored", body.reason, after={"scenario_id": scenario_id, "version": body.version+1})
+    db.commit()
+    return network_scenario_dict(row)
 
 
 class JobBody(StrictModel):

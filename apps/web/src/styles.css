@@ -68,3 +68,6 @@
 .water-extension { display:grid; gap:14px; margin-top:24px; padding-top:18px; border-top:1px solid var(--border); min-width:0; }
 .water-extension .form-fields { min-width:0; }
 .water-extension td { overflow-wrap:anywhere; }
+
+.saved-network-scenarios { display:grid; gap:14px; min-width:0; }
+.saved-network-scenarios .form-fields { min-width:0; }

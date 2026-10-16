@@ -1,3 +1,4 @@
+import {SavedNetworkScenarios} from './SavedNetworkScenarios';
 import {useEffect, useState} from 'react';
 import {Download, Network, RotateCcw} from 'lucide-react';
 import {api, Bootstrap, CivicCase, date, download, fmt, getDisplayTimezoneLabel} from './api';
@@ -6,7 +7,7 @@ import {networkCases} from './networkCases';
 
 type Node = {id:string; name:string; type?:string; kind?:string; zone_id:string; x?:number; y?:number};
 type Edge = {id:string; source:string; target:string; length_m:number; open?:boolean};
-type Topology = {nodes:Node[]; edges:Edge[]};
+type Topology = {nodes:Node[]; edges:Edge[];configuration_hash:string};
 type Connection = {connected:boolean; path:string[]; path_edges:string[]; reachable:string[]; unreachable:string[]; distance_m:number|null; closed_edges:string[]};
 
 export function NetworkPage({data, select}:{data:Bootstrap; select:(c:CivicCase)=>void}) {
@@ -71,7 +72,7 @@ function NetworkSandbox({network, data, select}:{network:Topology; data:Bootstra
   return <>
     <div className="panel-toolbar topology-toolbar">
       <label>Network zone<select aria-label="Network zone" value={zone} onChange={e=>chooseZone(e.target.value)}><option value="">All authorized zones</option>{[...new Set(network.nodes.map(n=>n.zone_id))].map(id=><option key={id} value={id}>{data.zones.find(z=>z.id===id)?.name || id}</option>)}</select></label>
-      <p className="helper">Closures belong to this page only. Zone changes and reset restore the configured network.</p>
+      <p className="helper">Unsaved closures belong to this page. Save a named scenario below to reopen it later. Zone changes and reset restore the configured network.</p>
       <button className="button secondary" onClick={()=>chooseZone('')}><RotateCcw size={15}/>Reset network scenario</button>
     </div>
     <div className="network-layout topology-layout">
@@ -134,6 +135,7 @@ function NetworkSandbox({network, data, select}:{network:Topology; data:Bootstra
       <SectionHead title={selectedNode?.name || 'Select a network asset'}/>
       {selectedNode ? <><p>{selectedNode.type || selectedNode.kind} · {selectedNode.zone_id} · {selectedNode.id}</p><div className="topology-actions"><button className="button secondary" onClick={()=>setSource(selectedNode.id)}>Use as source</button><button className="button secondary" onClick={()=>setTarget(selectedNode.id)}>Use as target</button></div><div className="network-case-list"><label className="checkbox-label"><input type="checkbox" checked={includeFinished} onChange={e=>setIncludeFinished(e.target.checked)}/>Include resolved and closed cases</label><p>{selectedGroup?.open.length || 0} open · {selectedGroup?.all.length || 0} total authorized linked cases</p>{selectedCases.map(c=><button className="network-case-card" key={c.id} data-network-case-id={c.id} onClick={()=>select(c)}><strong>{c.title}</strong><span><Badge type={['critical','high'].includes(c.severity)?'red':c.severity==='medium'?'amber':'neutral'}>{statusName(c.severity)}</Badge><Badge>{statusName(c.status)}</Badge><span>{c.provenance} · Updated {date(c.updated_at)} {getDisplayTimezoneLabel()}</span></span><span>{c.summary}</span><span className="text-button">Open evidence passport →</span></button>)}{!selectedCases.length&&<p className="helper">{includeFinished?'No authorized cases are linked to this asset.':'No open linked investigations. This does not confirm normal service.'}</p>}</div><p className="helper">A closure scenario does not change case evidence, severity, workflow status or physical infrastructure.</p></> : <p className="helper">Choose a node on the schematic or an asset in the register.</p>}
     </section>
+    <SavedNetworkScenarios inputs={{source,target,closed_edges:closed,zone_id:zone||null}} configurationHash={network.configuration_hash} onLoad={inputs=>{setZone(inputs.zone_id||'');setSource(inputs.source);setTarget(inputs.target);setClosed(inputs.closed_edges);setSelected(null)}}/>
     <section className="panel spaced"><SectionHead title="Pipe closure register"/><div className="table-scroll"><table><thead><tr><th>Pipe</th><th>Directed connection</th><th>Length</th><th>Scenario state</th></tr></thead><tbody>{edges.map(edge=><tr key={edge.id}><td>{edge.id}</td><td>{label(edge.source)} → {label(edge.target)}</td><td>{fmt(edge.length_m)} m</td><td><label className="checkbox-label"><input type="checkbox" aria-label={`Close ${edge.id} in scenario`} checked={isClosed(edge)} disabled={edge.open===false} onChange={()=>toggle(edge)}/>{edge.open===false?'Closed in configuration':isClosed(edge)?'Closed in scenario':'Open'}</label></td></tr>)}</tbody></table></div>{!edges.length&&<p className="helper pad">No connections exist inside this zone.</p>}</section>
     <section className="panel spaced"><SectionHead title="Network asset register"/><div className="table-scroll"><table><thead><tr><th>Asset</th><th>Type</th><th>Zone</th><th>Open investigations</th></tr></thead><tbody>{nodes.map(n=><tr key={n.id}><td><button className="text-button" onClick={()=>setSelected(n.id)}>{n.name}</button><small>{n.id}</small></td><td>{n.type || n.kind}</td><td>{n.zone_id}</td><td>{investigations.get(n.id)!.open.length}<small>{investigations.get(n.id)!.severity ? `Highest: ${statusName(investigations.get(n.id)!.severity!)}` : 'No open linked cases'}</small></td></tr>)}</tbody></table></div></section>
   </>;
