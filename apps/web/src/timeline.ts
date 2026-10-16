@@ -53,3 +53,14 @@ export function filterReadings(rows: TimedReading[], zone: string, domain: strin
   // Bootstrap carries water telemetry only. Do not relabel it as another domain.
   return ['all','water'].includes(domain) ? rows.filter(row => (zone === 'all' || row.zone_id === zone) && overlaps(readingInterval(row), window)) : [];
 }
+
+export function domainReadings(rows:TimedReading[], domain:string, assets:Array<{id:string;domain:string;zone_id:string}>, zone:string, window:TimeWindow|null) {
+  const registry=new Map(assets.map(asset=>[asset.id,asset]));
+  return rows.filter(row=>{
+    const asset=typeof row.asset_id==='string'?registry.get(row.asset_id):undefined;
+    if(row.domain&&row.domain!==domain||asset&&asset.domain!==domain)return false;
+    if(asset&&row.zone_id&&asset.zone_id!==row.zone_id)return false;
+    const actualZone=row.zone_id||asset?.zone_id;
+    return (zone==='all'||actualZone===zone)&&overlaps(readingInterval(row),window);
+  });
+}

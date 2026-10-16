@@ -1,8 +1,16 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {caseInterval, overlaps, readingInterval, timelineBounds, parseTimeline, resolveWindow, filterReadings, HOUR} from '../apps/web/src/timeline.ts';
+import {caseInterval, overlaps, readingInterval, timelineBounds, parseTimeline, resolveWindow, filterReadings, domainReadings, HOUR} from '../apps/web/src/timeline.ts';
 const time = value => Date.parse(value);
 const window = {start:time('2026-10-12T00:00:00Z'),end:time('2026-10-13T00:00:00Z')};
+
+test('domain charts use their own observations, registry zones and exact shared interval window',()=>{
+  const assets=[{id:'e',domain:'electricity',zone_id:'river'},{id:'w',domain:'water',zone_id:'river'}];
+  const rows=[{asset_id:'e',timestamp:'2026-10-12T01:00:00Z',actual:null},{asset_id:'e',zone_id:'hill',timestamp:'2026-10-12T01:00:00Z',actual:10},{asset_id:'w',timestamp:'2026-10-12T01:00:00Z',actual:20},{asset_id:'e',timestamp:'2026-10-13T00:00:00Z',actual:30},{asset_id:'unknown',timestamp:'2026-10-12T01:00:00Z',actual:0}];
+  assert.deepEqual(domainReadings(rows,'electricity',assets,'river',window),[rows[0]]);
+  assert.deepEqual(domainReadings(rows,'electricity',assets,'all',window),[rows[0],rows[4]]);
+  assert.equal(domainReadings(rows,'electricity',assets,'hill',window).length,0);
+});
 
 test('sensor events use observation intervals even when cases were created later',()=>{
   const item={created_at:'2026-10-14T10:00:00Z',evidence:{start:'2026-10-12T23:00:00Z',end:'2026-10-13T01:00:00Z'}};

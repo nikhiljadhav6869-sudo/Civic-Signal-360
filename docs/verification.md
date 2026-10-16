@@ -2,13 +2,19 @@
 
 Updated 16 October 2026. Only executed checks are marked passed.
 
+## Shared domain timelines
+
+The domain observation chart and its case list now use the shared zone and absolute time window, preserving URL selection across navigation/reload. Each domain uses its own published series; asset-registry fallback resolves zone only when consistent. Empty, unknown and zero observations remain distinct. Full-analysis planning, forecast and quality summaries remain explicitly outside this observation filter.
+
+Local verification passed **47 JavaScript tests**, lint, TypeScript compilation and build (2,234 modules). Seven browser journeys in `scripts/domain-timeline-check.mjs` verified exact per-domain filtered JSON exports, table counts or honest empty views, reload persistence, cross-page selection and the narrow-screen electricity view. Results: `artifacts/verification/domain-timeline.json`. These checks are added to hosted CI; the water run below predates the domain-timeline change.
+
 ## Historical water context, group comparison and reload recovery
 
 Local verification on 16 October passed **208 Python tests** in 136.12 seconds (four known warnings), **46 JavaScript tests**, ESLint, TypeScript compilation and production build (2,233 modules). The isolated preview passed **52 browser checks**: eight completion journeys, 37 regression checks, three saved-review journeys including consent-based reload recovery, and four new history/comparison journeys. The latter verify frozen effective schedules, correction/gap semantics, exact two-meter totals/exports, incomplete-window rejection, Marathi controls and 390/768/1440 layouts. Results are in `artifacts/verification/water-history.json` and `water-review-evidence.json`.
 
 An initial history test created a new service zone, correctly causing the existing operator's all-zone scenario/baseline authorization to fail. The fixture now uses the existing River Ward, independent synthetic assets, retained audit history and configuration restoration. The full suites passed on a fresh isolated database at `.runtime/water-completion-preview`; the previous `.runtime/completion-preview` database was preserved. An earlier dropdown locator failure was fixed with explicit accessible names. Neither unsuccessful run is counted as a pass.
 
-The new checks are included in GitHub Actions; the hosted results below precede these latest additions until a new run is recorded.
+Both hosted jobs passed for source `2acb45f9a8509d85702e099b2dd93f6c653128c9` in [run 38911224446](https://github.com/nikhiljadhav6869-sudo/Civic-Signal-360/actions/runs/38911224446), including fresh Linux installation/tests/startup and Docker/PostgreSQL browser/restart checks. Step outcomes are saved in `artifacts/verification/water-history-ci.json`.
 
 ## Saved water-review evidence verification
 
