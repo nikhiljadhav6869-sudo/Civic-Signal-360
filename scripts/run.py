@@ -64,7 +64,8 @@ def main():
         if not args.no_worker:
             children.append(subprocess.Popen([sys.executable, "-m", "services.api.worker"]))
         print(f"CivicSignal 360 starting: http://{args.host}:{args.port}", flush=True)
-        print("Independent hackathon prototype — synthetic local demonstration. Ctrl+C stops both services.", flush=True)
+        mode = "synthetic local demonstration" if os.getenv("CIVIC_DEMO_MODE", "true").lower() == "true" else "software workspace"
+        print(f"Independent hackathon prototype — {mode}. Ctrl+C stops both services.", flush=True)
         browser_opened = False
         while all(process.poll() is None for process in children):
             if args.open_browser and not browser_opened and running_app(url):

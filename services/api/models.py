@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, Float, ForeignKey, Index, Integer, JSON, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Column, Float, ForeignKey, Index, Integer, JSON, LargeBinary, String, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -206,6 +206,14 @@ class Evidence(Base):
     observations = Column(JSON, default=dict, nullable=False)
     created_at = Column(String, default=now, nullable=False)
     __table_args__ = (Index("uq_evidence_submission", "case_id", "actor_id", "idempotency_key", unique=True),)
+
+
+class EvidenceContent(Base):
+    """Private sanitized photo bytes, optionally persisted with the database."""
+    __tablename__ = 'evidence_content'
+    evidence_id = Column(ForeignKey('evidence.id', ondelete='CASCADE'), primary_key=True)
+    content = Column(LargeBinary, nullable=False)
+    byte_count = Column(Integer, nullable=False)
 
 
 class Notification(Base):

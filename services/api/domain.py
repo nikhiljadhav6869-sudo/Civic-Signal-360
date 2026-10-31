@@ -13,7 +13,7 @@ TRANSITIONS = {
     "assigned": {"investigating", "intervention", "closed"},
     "intervention": {"monitoring"},
     "monitoring": {"resolved", "assigned", "closed"},
-    "resolved": {"investigating"},
+    "resolved": {"investigating", "closed"},
     "closed": {"investigating"},
 }
 
@@ -72,7 +72,10 @@ def notify(db, user_id, case, title, event):
         return
     key = f"{user_id}:{case.id if case else 'system'}:{event}"
     if not db.query(Notification).filter_by(dedupe_key=key).first():
-        db.add(Notification(user_id=user_id, case_id=case.id if case else None, dedupe_key=key, title=title))
+        notification = Notification(user_id=user_id, case_id=case.id if case else None, dedupe_key=key, title=title)
+        db.add(notification)
+        from .delivery import enqueue
+        enqueue(db, notification)
 
 
 def notify_case(db, case, title, event):
@@ -109,9 +112,14 @@ def notify_overdue(db):
     """Idempotent administrative escalation, never a statutory deadline claim."""
     for case in db.query(Case).filter(Case.deadline_at < now(), Case.status.notin_(["resolved", "closed"])).all():
         notify_case(db, case, f"Review overdue: {case.title}", f"overdue:{case.deadline_at}")
+        rule = (case.evidence or {}).get("service_target")
+        if rule:
+            supervisor = db.get(User, rule["supervisor_id"])
+            if supervisor and supervisor.active and can_case(supervisor, case):
+                notify(db, supervisor.id, case, "Supervisor review overdue", f"supervisor:{case.deadline_at}")
 
 
-def transition(db, user, case, target, reason, version):
+def transition(db, user, case, target, reason, version, public_summary=None):
     if target not in TRANSITIONS.get(case.status, set()):
         raise HTTPException(409, f"Cannot move from {case.status} to {target}.")
     if user.role == "inspector" and target != "monitoring":
@@ -126,7 +134,24 @@ def transition(db, user, case, target, reason, version):
         intervention = db.query(Evidence).filter_by(case_id=case.id, kind="intervention").order_by(Evidence.created_at.desc()).first()
         if not intervention or not db.query(Evidence).filter(Evidence.case_id == case.id, Evidence.kind == "follow_up", Evidence.created_at > intervention.created_at).first():
             raise HTTPException(409, "A documented follow-up inspection after the latest intervention is required before human-reviewed resolution.")
-    return mutate_case(db, user, case, version, "transition", reason, status=target)
+        reopenings = db.query(Audit).filter_by(case_id=case.id).order_by(Audit.created_at.desc()).all()
+        latest_reopen = next((a for a in reopenings if a.action == "citizen_dispute" or (a.before.get("status") in {"closed", "resolved"} and a.after.get("status") == "investigating")), None)
+        if latest_reopen and intervention.created_at <= latest_reopen.created_at:
+            raise HTTPException(409, "A reopened investigation needs new intervention and follow-up evidence.")
+    evidence = dict(case.evidence or {})
+    if target == "closed" and case.status != "resolved":
+        finding = evidence.get("field_finding", {})
+        inspection = db.get(Evidence, finding.get("inspection_id")) if finding else None
+        if finding.get("classification") != "false_alert" or not inspection or inspection.case_id != case.id or inspection.kind != "inspection":
+            raise HTTPException(409, "Resolve with follow-up evidence, or document an inspected false alert before closing.")
+    if target in {"resolved", "closed"}:
+        if not public_summary or len(public_summary.strip()) < 10:
+            raise HTTPException(422, "Provide a citizen-facing outcome explanation without personal or internal information.")
+        evidence["public_resolution"] = {"message": public_summary.strip(), "at": now(), "status": target}
+    elif target == "investigating" and case.status in {"resolved", "closed"}:
+        evidence.pop("public_resolution", None)
+        evidence.pop("field_finding", None)
+    return mutate_case(db, user, case, version, "transition", reason, status=target, evidence=evidence)
 
 
 def create_finding_case(db, finding, provenance="Synthetic", prefix="", demo_owner_id=None, demo_session_id=None, priority_weights=None, priority_version=None):
@@ -155,6 +180,8 @@ def create_finding_case(db, finding, provenance="Synthetic", prefix="", demo_own
 def full_case(db, case, user=None):
     case.priority_review = case_priority_reviews(db, [case], user=user)[case.id]
     result = serialize_case(case)
+    from .accountability import accountability
+    result["accountability"] = accountability(db, case)
     members = db.query(User).filter(User.id.in_([case.assigned_to, *case.secondary_assignees])).all()
     names = {member.id: member.name for member in members}
     result["assignment_team"] = {"lead": {"id": case.assigned_to, "name": names.get(case.assigned_to, case.assigned_to)} if case.assigned_to else None, "supporting": [{"id": ident, "name": names.get(ident, ident)} for ident in case.secondary_assignees]}

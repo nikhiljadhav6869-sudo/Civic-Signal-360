@@ -1,0 +1,54 @@
+{
+  "provenance": "Simulated in isolated temporary database",
+  "hardware_validated": false,
+  "phases": [
+    {
+      "phase": "normal",
+      "clock": "2026-10-29T10:00:00+00:00",
+      "state": "reporting",
+      "quality": "valid",
+      "observation_stale": false,
+      "recovered_at": "2026-10-29T10:00:00+00:00"
+    },
+    {
+      "phase": "unusual_consumption_input_not_confirmed_leak",
+      "clock": "2026-10-29T10:00:00+00:00",
+      "state": "reporting",
+      "quality": "valid",
+      "observation_stale": false,
+      "recovered_at": "2026-10-29T10:00:00+00:00"
+    },
+    {
+      "phase": "missing",
+      "clock": "2026-10-29T10:00:00+00:00",
+      "state": "reporting",
+      "quality": "missing",
+      "observation_stale": false,
+      "recovered_at": "2026-10-29T10:00:00+00:00"
+    },
+    {
+      "phase": "stale",
+      "clock": "2026-10-29T10:12:00+00:00",
+      "state": "stale",
+      "quality": "missing",
+      "observation_stale": true,
+      "recovered_at": "2026-10-29T10:00:00+00:00"
+    },
+    {
+      "phase": "offline",
+      "clock": "2026-10-29T10:35:00+00:00",
+      "state": "offline",
+      "quality": "missing",
+      "observation_stale": true,
+      "recovered_at": "2026-10-29T10:00:00+00:00"
+    },
+    {
+      "phase": "recovery",
+      "clock": "2026-10-29T10:36:00+00:00",
+      "state": "reporting",
+      "quality": "valid",
+      "observation_stale": false,
+      "recovered_at": "2026-10-29T10:36:00+00:00"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "provenance": "Local synthetic software-only acceptance; no hardware or live email",
+  "checks": [
+    {
+      "name": "Software-only data guide and keyboard skip link",
+      "status": "passed"
+    },
+    {
+      "name": "Admin can save and preview temporary retention; unsaved policy blocks preview",
+      "status": "passed"
+    },
+    {
+      "name": "Advanced Marathi controls, document language and responsive admin forms",
+      "status": "passed"
+    },
+    {
+      "name": "Selected admin, data, forecast and preferences controls have accessible names",
+      "status": "passed"
+    }
+  ],
+  "errors": []
+}

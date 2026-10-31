@@ -54,7 +54,7 @@ def test_complete_human_reviewed_domain_workflow(login, domain):
     assert operator.post(f"/api/v1/cases/{ident}/transition", json={"status": "resolved", "reason": "No followup yet", "version": case["version"]}).status_code == 409
     case = mutation(inspector, case, "inspection", kind="follow_up", notes="Synthetic follow-up inspection records restored condition.", checklist={"follow_up": True, **electrical_confirmation})
     assert inspector.post(f"/api/v1/cases/{ident}/transition", json={"status": "resolved", "reason": "Inspector cannot close", "version": case["version"]}).status_code == 403
-    case = mutation(operator, case, "transition", status="resolved", reason="Human-reviewed follow-up evidence supports closure")
+    case = mutation(operator, case, "transition", status="resolved", reason="Human-reviewed follow-up evidence supports closure", public_summary="The recorded intervention and follow-up support resolution. You may challenge this outcome.")
     assert len(case["audits"]) >= 8
     assert citizen.get(f"/api/v1/reports/{submitted['id']}").json()["status"] == "resolved"
     case = mutation(operator, case, "transition", status="investigating", reason="Reopen after a new observation")

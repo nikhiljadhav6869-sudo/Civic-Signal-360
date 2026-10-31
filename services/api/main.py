@@ -25,6 +25,7 @@ from .models import Asset, Association, Audit, Case, CaseInspector, Configuratio
 from .priorities import DEFAULT_CASE_PRIORITY_WEIGHTS, case_priority_snapshot, validate_case_priority_weights
 from .security import COOKIE_NAME, DEMO_MODE, DOMAINS, SECURE_COOKIES, can_case, current_user, ensure_demo_session, hash_password, in_scope, public_user, rate_limit, require_admin, require_staff, token_hash, verify_password
 from .seed import seed_database
+from .models import EvidenceContent
 
 logger = logging.getLogger("civicsignal.api")
 DOMAIN = Literal["water", "electricity", "roads", "drainage", "waste", "streetlights", "general"]
@@ -45,6 +46,16 @@ from .baselines import router as baseline_router
 app.include_router(baseline_router)
 from .water_operations import router as water_operations_router
 app.include_router(water_operations_router)
+from .accountability import router as accountability_router, accountability, apply_target
+app.include_router(accountability_router)
+from .sensors import router as sensors_router
+app.include_router(sensors_router)
+from .delivery import router as delivery_router
+app.include_router(delivery_router)
+from .water_case_context import router as water_context_router
+app.include_router(water_context_router)
+from .operations_readiness import router as readiness_router
+app.include_router(readiness_router)
 
 
 @app.middleware("http")
@@ -54,6 +65,9 @@ async def response_headers(request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "same-origin"
     response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+    if not DEMO_MODE and SECURE_COOKIES and request.url.scheme == 'https':
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000'
     response.headers["Permissions-Policy"] = "geolocation=(self), camera=(), microphone=()"
     if request.url.path.startswith("/api"):
         response.headers["Cache-Control"] = "no-store"
@@ -223,12 +237,13 @@ class TransitionBody(StrictModel):
     status: str
     reason: str = Field(min_length=3, max_length=4000)
     version: int = Field(ge=1)
+    public_summary: str | None = Field(default=None, min_length=10, max_length=2000)
 
 
 @app.post("/api/v1/cases/{case_id}/transition")
 def change_status(case_id: str, body: TransitionBody, user=Depends(current_user), db=Depends(get_db)):
     case = case_access(db, user, case_id)
-    transition(db, user, case, body.status, body.reason, body.version)
+    transition(db, user, case, body.status, body.reason, body.version, public_summary=body.public_summary)
     db.commit()
     return full_case(db, case, user)
 
@@ -243,7 +258,7 @@ class AssignmentBody(StrictModel):
 def assign(case_id: str, body: AssignmentBody, user=Depends(current_user), db=Depends(get_db)):
     require_staff(user)
     case = case_access(db, user, case_id)
-    if case.status not in {"needs_review", "investigating", "assigned", "monitoring"}:
+    if case.status not in {"needs_review", "investigating", "assigned", "intervention", "monitoring"}:
         raise HTTPException(409, "Investigate or reopen this case before assigning work.")
     inspector = db.get(User, body.inspector_id)
     if not inspector or inspector.role != "inspector" or not inspector.active or not in_scope(inspector, case.domain, case.zone_id):
@@ -253,7 +268,7 @@ def assign(case_id: str, body: AssignmentBody, user=Depends(current_user), db=De
     previous_support = case.secondary_assignees
     case.support_assignments = [entry for entry in case.support_assignments if entry.user_id != inspector.id]
     db.flush()
-    mutate_case(db, user, case, body.version, "assignment", body.reason, assigned_to=inspector.id, status="assigned", audit_before={"secondary_assignees": previous_support}, audit_after={"secondary_assignees": case.secondary_assignees})
+    mutate_case(db, user, case, body.version, "assignment", body.reason, assigned_to=inspector.id, status="intervention" if case.status == "intervention" else "assigned", audit_before={"secondary_assignees": previous_support}, audit_after={"secondary_assignees": case.secondary_assignees})
     db.commit()
     return full_case(db, case, user)
 
@@ -325,6 +340,8 @@ def inspect_case(case_id: str, body: InspectionBody, user=Depends(current_user),
         raise HTTPException(403, "An assigned inspector records field findings.")
     if previous_field_submission(db, user, case, body, body.kind):
         return full_case(db, case, user)
+    if case.status in {"resolved", "closed"}:
+        raise HTTPException(409, "Reopen the investigation before adding new field findings.")
     from .field_schema import validate_observations
     validate_observations(case.domain, body.observations)
     if case.domain == "electricity":
@@ -409,7 +426,10 @@ def report_dict(db, report):
     result["status"] = case.status
     result["updated_at"] = case.updated_at
     result["reported_incident"] = (case.evidence or {}).get("reported_incident")
-    result["receipt"] = "CS360-" + report.id[:8].upper()
+    result["receipt"] = "CS360-" + report.id.upper()
+    result["legacy_receipt"] = "CS360-" + report.id[:8].upper()
+    result["tracking_reference"] = "CS360-" + report.id.upper()
+    result["accountability"] = accountability(db, case)
     return result
 
 
@@ -436,8 +456,7 @@ def create_report(body: ReportBody, user=Depends(current_user), db=Depends(get_d
     report_severity = "high" if incident and incident["type"] in {"power_outage", "electrical_hazard"} else "medium"
     case = Case(id=uid(), event_key="report:" + user.id + ":" + body.idempotency_key, title=body.title, domain=body.domain, zone_id=body.zone_id, asset_id=body.affected_asset_id, severity=report_severity, summary="Citizen observation awaiting inspection. Reported details remain private.", provenance="Reported", priority=75 if report_severity == "high" else 50, evidence=evidence)
     db.add(case)
-    config = db.get(Configuration, "platform")
-    case.deadline_at = (datetime.fromisoformat(now()) + timedelta(hours=(config.value if config else {}).get("review_hours", 72))).isoformat()
+    apply_target(db, case)
     db.flush()
     report = Report(user_id=user.id, case_id=case.id, **body.model_dump(exclude={"incident_type", "affected_asset_id"}))
     db.add(report)
@@ -1018,6 +1037,10 @@ async def csv_preview(file: UploadFile = File(...), user=Depends(current_user), 
 @app.post("/api/v1/uploads/{upload_id}/commit")
 def csv_commit(upload_id: str, user=Depends(current_user), db=Depends(get_db)):
     require_staff(user)
+    # Serialize commit against administrator cleanup of old, uncommitted previews.
+    lock = db.execute(update(Upload).where(Upload.id == upload_id, True if user.role == 'admin' else Upload.user_id == user.id).values(status=Upload.status))
+    if lock.rowcount != 1:
+        raise HTTPException(404, "Preview not found.")
     upload = db.get(Upload, upload_id)
     if not upload or (upload.user_id != user.id and user.role != "admin"):
         raise HTTPException(404, "Preview not found.")
@@ -1080,20 +1103,29 @@ async def upload_evidence(case_id: str, file: UploadFile = File(...), notes: str
             image.load()
             image = image.convert("RGB")
             image.thumbnail((2400, 2400))
-            folder = DATA_DIR / "private-evidence"
-            folder.mkdir(parents=True, exist_ok=True)
             filename = uid() + ".jpg"
-            image.save(folder / filename, "JPEG", quality=88)
+            sanitized = io.BytesIO()
+            image.save(sanitized, "JPEG", quality=88)
     except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError) as exc:
         raise HTTPException(422, "The file is not a supported safe photograph.") from exc
     record = Evidence(case_id=case.id, actor_id=user.id, kind="photograph", notes=notes, filename=filename, mime="image/jpeg", content_hash=checksum, idempotency_key=submission_key)
+    storage = os.getenv('CIVIC_EVIDENCE_STORAGE', 'filesystem')
+    if storage not in {'database', 'filesystem'}:
+        raise HTTPException(503, 'Evidence storage configuration is invalid.')
+    folder = DATA_DIR / 'private-evidence'
+    if storage == 'filesystem':
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / filename).write_bytes(sanitized.getvalue())
     db.add(record)
     db.flush()
+    if storage == 'database':
+        db.add(EvidenceContent(evidence_id=record.id, content=sanitized.getvalue(), byte_count=len(sanitized.getvalue())))
     audit(db, user, case, "evidence_added", notes, after={"evidence_id": record.id})
     try:
         db.commit()
     except Exception:
-        (folder / filename).unlink(missing_ok=True)
+        if storage == 'filesystem':
+            (folder / filename).unlink(missing_ok=True)
         raise
     return {"id": record.id, "kind": record.kind, "notes": record.notes, "url": f"/api/v1/evidence/{record.id}/download", "created_at": record.created_at}
 
@@ -1119,6 +1151,11 @@ def download_evidence(evidence_id: str, user=Depends(current_user), db=Depends(g
     own_report = db.query(Report).filter_by(case_id=case.id, user_id=user.id).first()
     if not can_case(user, case) and not (own_report and evidence.actor_id == user.id):
         raise HTTPException(403, "This photograph is private.")
+    stored = db.get(EvidenceContent, evidence.id)
+    if stored:
+        return Response(stored.content, media_type='image/jpeg', headers={'Content-Disposition': 'inline; filename=case-evidence.jpg'})
+    if not (DATA_DIR / 'private-evidence' / evidence.filename).is_file():
+        raise HTTPException(404, 'Photograph content is unavailable. Contact the administrator about the evidence backup.')
     return FileResponse(DATA_DIR / "private-evidence" / evidence.filename, media_type="image/jpeg", filename="case-evidence.jpg", headers={"Content-Disposition": "inline; filename=case-evidence.jpg"})
 
 

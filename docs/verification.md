@@ -1,6 +1,38 @@
 # Verification log
 
-Updated 16 October 2026. Only executed checks are marked passed.
+Updated 31 October 2026. Only executed checks are marked passed.
+
+## Software-only operations and free deployment preparation
+
+- Full backend run: **236 passed**, four warnings, before database-backed photo storage was added. Result: `artifacts/verification/software-only-pytest.xml`.
+- After photo/schema changes: **19 passed** across Render storage, migrations, field observations, photo recovery and backup/restore. Result: `artifacts/verification/render-storage-pytest.xml`. The new storage test changes the local data directory, verifies the image still downloads from the database, rejects an unauthorized account, and repeats initialization without losing records. This used SQLite; hosted PostgreSQL remains unverified.
+- **50 JavaScript tests**, lint, TypeScript and final production build passed. The build retains the existing empty React chunk and bundle-size warnings.
+- On isolated `http://127.0.0.1:8012`, **4 software-only browser checks**, **2 English/Marathi accountable case journeys**, and **8 completion journeys** passed. Software checks cover the data guide, keyboard skip link, retention save/preview safeguards, selected accessible names, CSP and Marathi admin layouts at 390/768/1440 pixels. Result files: `software-only-browser.json`, `accountability-browser.json`, `completion-browser.json`.
+- Browser failures corrected: CSV downloads are links; prefilled wrapped labels and select labels require prefix matching in the tests. A hidden table heading escaped its scroll container and widened the staff page; positioning the scroll container fixes the actual mobile overflow. Complete bilingual journeys passed after that CSS fix.
+- Local `scripts/check_readiness.py` passed. It is configuration inspection, not a live-deployment check. CI was updated but its hosted execution is not claimed here.
+
+The application is software-only. No hardware, real email, municipal dataset, water savings, public deployment, Render capacity or hosted restore was validated by these runs. See `software-only-handover.md` and `render-free-deployment.md`.
+
+## Accountable complaints and water pilot
+
+The new work includes private citizen disputes, evidence-gated public outcomes, configured update targets and supervisor escalation, a focused bilingual workbench, staff-only current water-quality context, authenticated water-device ingestion/state monitoring and an opt-in SMTP outbox. Existing data were preserved; tests used an isolated synthetic database on port 8011.
+
+| Check | Executed result | Evidence |
+| --- | --- | --- |
+| Full backend suite | **227 passed**, 871.53 seconds, four warnings | `artifacts/verification/accountability-pytest.xml` |
+| Final update-target regression | **6 passed**, including the five existing accountability tests and one new regression, 50.53 seconds, one warning. This ran after the full suite; it verifies that later message-only updates retain an explicitly promised time without exposing a legacy internal deadline. | `artifacts/verification/accountability-target-regression.xml` |
+| JavaScript logic | **50 passed**, including aborted/malformed response handling | `node --experimental-strip-types --test scripts/*.test.mjs` |
+| Frontend | ESLint, TypeScript and production build passed; 2,240 modules transformed. Vite reports a bundle-size advisory. | Local installed Node/Vite toolchain |
+| Core browser workflows | **2 passed**, English and Marathi: citizen submission, assignment, site verification/classification, intervention, follow-up, public resolution, citizen dispute and exact retry after losing the committed response. No uncaught page errors. | `artifacts/verification/accountability-browser.json` |
+| Existing completion journeys | **8 passed**, water configuration plus all seven domain workflows, no uncaught page errors | `artifacts/verification/completion-browser.json` |
+| Mobile and keyboard | Core journeys checked horizontal overflow at 390/768/1440 pixels and keyboard movement through the action form. Screenshots reviewed. This is not a complete accessibility audit. | Core browser script and local screenshots |
+| Water-device simulator | Six phases exercised: normal, unusual input, missing data, stale contact, offline contact and recovery. Hardware validation remains false. | `artifacts/verification/sensor-simulation.json` |
+
+The backend suite includes another citizen's access rejection, unassigned/overdue handling, revoked assignment, configured escalation deduplication, inspected false-alert closure and dispute, stale evidence rejection after reopening, sensor authentication/validation/delayed packets/conflicts/rotation, and delivery failure/retry ownership. Email tests replace the transport; no live email delivery is claimed.
+
+An earlier browser run completed both journeys but recorded an uncaught error when an aborted request was incorrectly converted into a successful-looking payload. The response reader now preserves abort errors and rejects unreadable success responses; three regression tests and the final clean browser run verify this correction. An earlier full backend run exposed interference between scenario-job fixtures; the fixture now isolates and restores unrelated jobs. Failed attempts are not counted as passes. A mobile full-page screenshot showed the offscreen skip link; a separate viewport/focus check confirmed it stays at -70px without focus and moves to 10px when keyboard-focused.
+
+These are **local implementation and synthetic verification results**. Current changes have not been validated with physical devices, municipal staff, a live email provider, native Marathi usability sessions or an assistive-technology audit. Hosted CI is configured for the new checks but has not run on this change. Older PostgreSQL/hosted results below apply only to their named earlier revisions. Retention/deletion governance, public deployment, distributed abuse controls, capacity and production restore drills remain outstanding.
 
 ## Shared domain timelines
 

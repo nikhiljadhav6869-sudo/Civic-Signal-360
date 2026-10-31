@@ -16,6 +16,7 @@ data/
 artifacts/verification/*.png
 artifacts/verification/*.zip
 artifacts/verification/*.webm
+artifacts/verification/*-failure-*.txt
 artifacts/verification/evidence-export.json
 artifacts/verification/*-case-evidence.json
 artifacts/verification/report-receipt.json

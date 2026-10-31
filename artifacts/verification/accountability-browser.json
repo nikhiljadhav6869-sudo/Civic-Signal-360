@@ -1,0 +1,13 @@
+{
+  "checks": [
+    {
+      "name": "Citizen submission, complete water workflow and lost-response dispute retry English",
+      "status": "passed"
+    },
+    {
+      "name": "Citizen submission, complete water workflow and lost-response dispute retry Marathi",
+      "status": "passed"
+    }
+  ],
+  "errors": []
+}

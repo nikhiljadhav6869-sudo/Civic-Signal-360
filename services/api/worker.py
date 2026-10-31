@@ -221,9 +221,17 @@ def execute_job(job_id, expected_token=None):
 
 
 def process_once():
+    from .operations_readiness import worker_heartbeat
+    with SessionLocal() as db:
+        worker_heartbeat(db)
     advanced = advance_scenario_playbacks()
     with SessionLocal() as db:
+        from .sensors import monitor_sensors
+        from .delivery import process_delivery
+        monitor_sensors(db)
         notify_overdue(db)
+        db.commit()
+        process_delivery(db)
         ident = claim_next(db)
         token = db.get(Job, ident).claim_token if ident else None
     if ident:

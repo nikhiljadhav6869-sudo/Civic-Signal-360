@@ -14,13 +14,14 @@ JOB_CONTROLS = "0005_job_controls"
 SCENARIO_PLAYBACK = "0006_scenario_playback"
 DEMO_SESSION_ISOLATION = "0007_demo_session_isolation"
 FIELD_OBSERVATIONS = "0008_field_observations"
+EVIDENCE_CONTENT = "0009_database_evidence_content"
 
 
 def migrate(engine, metadata):
     with engine.begin() as connection:
         connection.execute(text("CREATE TABLE IF NOT EXISTS schema_migrations (revision VARCHAR(100) PRIMARY KEY, applied_at VARCHAR(100) NOT NULL)"))
         applied = {r[0] for r in connection.execute(text("SELECT revision FROM schema_migrations"))}
-        if applied - {BASELINE, EVIDENCE_KEYS, CASE_INSPECTORS, BASELINE_VERSIONS, JOB_CONTROLS, SCENARIO_PLAYBACK, DEMO_SESSION_ISOLATION, FIELD_OBSERVATIONS}:
+        if applied - {BASELINE, EVIDENCE_KEYS, CASE_INSPECTORS, BASELINE_VERSIONS, JOB_CONTROLS, SCENARIO_PLAYBACK, DEMO_SESSION_ISOLATION, FIELD_OBSERVATIONS, EVIDENCE_CONTENT}:
             raise RuntimeError("Database schema is newer than this application; migration refused.")
         if BASELINE not in applied:
             from datetime import datetime, timezone
@@ -77,6 +78,12 @@ def migrate(engine, metadata):
                 if "observations" not in columns:
                     connection.execute(text("ALTER TABLE evidence ADD COLUMN observations JSON NOT NULL DEFAULT '{}'"))
             connection.execute(text('INSERT INTO schema_migrations (revision, applied_at) VALUES (:revision, :at)'), {'revision': FIELD_OBSERVATIONS, 'at': datetime.now(timezone.utc).isoformat()})
+
+
+        if EVIDENCE_CONTENT not in applied:
+            from datetime import datetime, timezone
+            metadata.tables['evidence_content'].create(connection, checkfirst=True)
+            connection.execute(text('INSERT INTO schema_migrations (revision, applied_at) VALUES (:revision, :at)'), {'revision': EVIDENCE_CONTENT, 'at': datetime.now(timezone.utc).isoformat()})
 
 
 if __name__ == "__main__":

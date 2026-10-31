@@ -23,13 +23,24 @@ export function useCitizenLanguage(user: {id: string, settings?: {language?: str
 }
 
 const statusTranslations: Record<string, string> = {
+  citizen_dispute:'नागरिकांचा आक्षेप — तपास पुन्हा सुरू',public_update:'नागरिकांसाठी माहिती नोंदवली',field_classification:'स्थळ तपासणीचा निष्कर्ष नोंदवला',
   needs_review: 'पुनरावलोकन आवश्यक', investigating: 'तपास सुरू आहे', assigned: 'कर्मचारी नेमले आहेत',
   intervention: 'कार्यवाही सुरू आहे', monitoring: 'पाठपुरावा सुरू आहे', resolved: 'निराकरण नोंदवले', closed: 'प्रकरण बंद केले',
   reported: 'अहवाल प्राप्त झाला', report_created: 'अहवाल प्राप्त झाला', report_submitted: 'अहवाल प्राप्त झाला', transition: 'स्थिती बदलली',
   assignment: 'कर्मचारी नेमणूक', inspection: 'स्थळ तपासणी नोंदवली', follow_up: 'पाठपुरावा नोंदवला',
+  photograph: 'छायाचित्राचा पुरावा', water_review: 'पाण्याच्या निरीक्षणांचा आढावा',
   evidence_added: 'पुरावा जोडला', report_linked: 'अहवाल प्रकरणाशी जोडला', report_corroboration: 'संबंधित निरीक्षण जोडले',
 };
 export function citizenStatus(value: string, mr: boolean) {
   return mr ? statusTranslations[value] || 'प्रकरण अद्ययावत केले' : value.replaceAll('_', ' ').replace(/^./, c => c.toUpperCase());
 }
 export const citizenDomains: Record<string, string> = {water:'पाणी', electricity:'वीज', roads:'रस्ते', drainage:'निचरा', waste:'कचरा', streetlights:'पथदिवे', general:'इतर पायाभूत सुविधा'};
+
+const severityTranslations: Record<string, string> = {low:'कमी', medium:'मध्यम', high:'जास्त', critical:'अत्यंत गंभीर', warning:'इशारा'};
+const provenanceTranslations: Record<string, string> = {Synthetic:'कृत्रिम नमुना डेटा', Simulated:'अनुकरणातील डेटा', Reported:'नागरिकांनी नोंदवलेले', Derived:'नोंदींवरून गणना केलेले', Historical:'ऐतिहासिक डेटा', Live:'थेट प्राप्त डेटा', Uploaded:'अपलोड केलेले', Measured:'मोजमापातून नोंदलेले', Manual:'हाताने नोंदवलेले'};
+const qualityTranslations: Record<string, string> = {valid:'वैध', missing:'गहाळ', invalid:'अवैध'};
+
+// Translate only known application values. Preserve unknown or user-supplied text.
+export function citizenSeverity(value: string, mr: boolean) {return mr ? severityTranslations[value] || value : value;}
+export function citizenProvenance(value: string, mr: boolean) {return mr ? provenanceTranslations[value] || value : value;}
+export function citizenQuality(value: string, mr: boolean) {return mr ? qualityTranslations[value] || value : value;}

@@ -21,6 +21,8 @@ jobs:
           version: '11.25.0'
       - run: pip install -r requirements.txt
       - run: python -m pytest tests -q
+      - name: Isolated software water-feed simulator
+        run: python scripts/simulate_water_sensor.py
       - run: pnpm --dir apps/web install --frozen-lockfile
       - run: node --experimental-strip-types --test scripts/*.test.mjs
       - run: pnpm --dir apps/web typecheck
@@ -50,7 +52,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - name: Clear checked-in local results before recording this runner
-        run: rm -f -- artifacts/verification/completion-browser.json artifacts/verification/browser-results.json artifacts/verification/water-review-evidence.json artifacts/verification/water-history.json artifacts/verification/domain-timeline.json
+        run: rm -f -- artifacts/verification/completion-browser.json artifacts/verification/browser-results.json artifacts/verification/water-review-evidence.json artifacts/verification/water-history.json artifacts/verification/domain-timeline.json artifacts/verification/accountability-browser.json artifacts/verification/software-only-browser.json
       - name: Build and start disposable PostgreSQL demo stack
         run: docker compose up --build --wait --wait-timeout 240
       - name: All seven human review workflows and water operations
@@ -63,6 +65,10 @@ jobs:
         run: node scripts/water-history-check.mjs
       - name: Shared domain chart timelines and scoped exports
         run: node scripts/domain-timeline-check.mjs
+      - name: English and Marathi accountable water workflows
+        run: node scripts/accountability-browser-check.mjs
+      - name: Software-only controls, Marathi and accessibility smoke checks
+        run: node scripts/software-only-browser-check.mjs
       - name: Preserve PostgreSQL evidence across application restart
         shell: bash
         run: |
@@ -86,6 +92,8 @@ jobs:
             artifacts/verification/water-review-evidence.json
             artifacts/verification/water-history.json
             artifacts/verification/domain-timeline.json
+            artifacts/verification/accountability-browser.json
+            artifacts/verification/software-only-browser.json
       - name: Remove disposable CI containers and volumes
         if: always()
         run: docker compose down --volumes

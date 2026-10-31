@@ -16,7 +16,10 @@ def completed_water_scenario(login, scenario="normal"):
     assert response.status_code == 202, response.text
     job_id = response.json()["id"]
     with SessionLocal() as db:
-        others = db.query(Job).filter(Job.id != job_id, Job.status == "queued").all()
+        # Isolate from earlier worker tests, including expired leases that become
+        # claimable while a longer full-suite run reaches this fixture.
+        others = db.query(Job).filter(Job.id != job_id, Job.status.in_(["queued", "running", "pausing"])).all()
+        previous_statuses = {job.id: job.status for job in others}
         for job in others:
             job.status = "paused"
         db.commit()
@@ -24,7 +27,7 @@ def completed_water_scenario(login, scenario="normal"):
         db.expire_all()
         token = db.get(Job, job_id).claim_token
         for job in others:
-            job.status = "queued"
+            job.status = previous_statuses[job.id]
         db.commit()
     execute_job(job_id, token)
     assert admin.get(f"/api/v1/jobs/{job_id}").json()["status"] == "succeeded"

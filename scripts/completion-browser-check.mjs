@@ -102,6 +102,7 @@ try{
     await action(actors.inspector.page,field.getByRole('button',{name:'Submit follow-up',exact:true}),'/inspection');
     drawer=await openCase(actors.operator,title);
     await drawer.getByLabel('Next state',{exact:true}).selectOption('resolved');
+    await drawer.getByLabel('Citizen-facing outcome explanation',{exact:true}).fill('Synthetic intervention and follow-up reviewed; challenge if the problem remains.');
     await drawer.getByLabel('Reason / reviewed evidence').fill('Synthetic human review of recorded intervention and follow-up evidence.');
     const closed=await action(actors.operator.page,drawer.getByRole('button',{name:'Record review decision'}),'/transition');
     assert.equal(closed.status,'resolved');assert.ok(closed.priority_review);

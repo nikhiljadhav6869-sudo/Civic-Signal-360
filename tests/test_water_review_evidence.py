@@ -91,7 +91,12 @@ def test_attachment_rejects_wrong_domain_zone_and_untrusted_browser_snapshot(log
 
 def test_closed_case_requires_explicit_reopening(login):
     operator, _, case, _, body, path = fixture(login)
-    closed=operator.post('/api/v1/cases/'+case['id']+'/transition',json={'version':case['version'],'status':'closed','reason':'Synthetic review dismissed this report'}).json()
+    # A legacy closed record remains protected. New closure requests require field evidence.
+    from services.api.models import Case
+    with SessionLocal() as db:
+        db.get(Case, case['id']).status='closed'
+        db.commit()
+    closed=operator.get('/api/v1/cases/'+case['id']).json()
     assert operator.post(path,json={**body,'case_version':closed['version']}).status_code==409
     with SessionLocal() as db:
         assert db.query(Evidence).filter_by(case_id=case['id']).count()==0

@@ -5,8 +5,9 @@ import {Badge,DomainIcon,Empty,KeyValue,SectionHead,Stat,domainInfo} from './com
 import {citizenDomains,citizenStatus,useCitizenLanguage} from './citizenLanguage';
 import {citizenDate,citizenNumber,citizenRequestError,isReportReceipt} from './citizenFormat';
 import {PhotoUpload} from './PhotoUpload';
+import {ComplaintAccountability,type Accountability} from './ComplaintAccountability';
 
-type Report = {id:string;case_id:string;receipt:string;title:string;description:string;location:string;domain:string;status:string;created_at:string;timeline?:{action:string;created_at:string;status?:string}[]};
+type Report = {id:string;case_id:string;receipt:string;tracking_reference?:string;accountability?:Accountability;title:string;description:string;location:string;domain:string;status:string;created_at:string;timeline?:{action:string;created_at:string;status?:string}[]};
 type ReadFailure = {status?:number};
 function isReport(value:unknown):value is Report {
   if(!isReportReceipt(value))return false;
@@ -66,7 +67,9 @@ export function ReportsPage({go,user}:{user:Bootstrap['user'];select?:(item:Civi
       <KeyValue label={t('Category','प्रकार')} value={mr?citizenDomains[detail.domain]:domainInfo(detail.domain).name}/>
       <KeyValue label={t('Current status','सध्याची स्थिती')} value={citizenStatus(detail.status,mr)}/>
       <KeyValue label={t('Submitted','पाठवले')} value={formattedDate(detail.created_at)}/>
+      <KeyValue label={t('Last recorded update','शेवटची नोंदवलेली माहिती')} value={formattedDate(detail.timeline?.at(-1)?.created_at||detail.created_at)}/>
       <KeyValue label={t('Submitted location','नोंदवलेले ठिकाण')} value={detail.location}/>
+      {detail.accountability&&<ComplaintAccountability key={detail.id} reportId={detail.id} status={detail.status} value={detail.accountability} mr={mr} onChanged={async()=>{const updated=await api('/reports/'+detail.id);setDetail(updated);await load()}}/>}
       <p className="helper">{t('Your observation remains as written. A report does not confirm a fault or promise a repair deadline.','आपले निरीक्षण जसे लिहिले आहे तसेच ठेवले आहे. अहवालामुळे दोष सिद्ध होत नाही किंवा दुरुस्तीची मुदत निश्चित होत नाही.')}</p>
       <div className="audit-timeline">{detail.timeline?.map((event,index)=><div key={index}><small>{formattedDate(event.created_at)}</small><h3>{citizenStatus(event.action,mr)}</h3>{event.status&&<Badge>{citizenStatus(event.status,mr)}</Badge>}</div>)}</div>
       <button className="text-button" onClick={()=>download({...detail,language,status_label:citizenStatus(detail.status,mr),submitted_label:formattedDate(detail.created_at),display_timezone:getDisplayTimezone()},'civicsignal-report-receipt.json')}><Download size={14}/>{t('Download receipt','पावती डाउनलोड करा')}</button>

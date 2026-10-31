@@ -1,8 +1,20 @@
 # CivicSignal 360 — working status
 
-Updated 16 October 2026. The local prototype is usable; full master-prompt acceptance and production readiness are not claimed.
+Updated 31 October 2026. The local prototype is usable; full master-prompt acceptance and production readiness are not claimed.
 
-## Current completion pass: requirements 1, 2, 4 and 5
+## Software-only and free deployment pass
+
+No hardware is required. Software data guidance, expanded Marathi controls, worker readiness and guarded temporary-record cleanup are implemented. Free Render configuration with external PostgreSQL and database-backed private photos is prepared. The full backend run passed 236 tests; 19 storage/migration/photo/backup tests passed after the storage change. Hosted deployment and its resource limits remain unverified. See [software-only handover](docs/software-only-handover.md) and [free deployment setup](docs/render-free-deployment.md).
+
+## Accountable water pilot improvements
+
+Citizen challenges and duplicate-safe reopening, explicit public outcome explanations, evidence-gated closure, configured team/update targets, a bilingual staff workbench and notification controls are implemented. Water investigations have site-linked classifications and a separate staff-only current-data-quality endpoint. Asset-bound authenticated sensor ingestion, contact-state monitoring, a reproducible isolated simulator and an opt-in SMTP outbox with visible failures/retries are implemented. Existing records are preserved; no destructive schema migration was required.
+
+Local verification: **227 backend tests** passed, followed by **6 accountability tests** after the final update-time fix (including one new regression); **50 JavaScript tests**, lint/typecheck/build, **2 bilingual core browser journeys**, **8 existing completion journeys**, and the six-phase sensor simulator passed. Tests use synthetic inputs. These earlier checks used local synthetic data, not hosted CI.
+
+See `docs/accountable-water-pilot.md` for the two walkthroughs, setup/operating instructions, evaluation worksheet and municipal checklist. See `docs/verification.md` for executed checks. Hardware is outside the software-only scope. Municipal response commitments, live email delivery, native-speaker usability and production validation are not claimed. Expanded admin/analytical translation and limited temporary cleanup are now implemented; complete translation, broad accessibility review, full erasure/retention governance and hosted validation remain outstanding.
+
+## Earlier completion pass: requirements 1, 2, 4 and 5
 
 - Domain observation charts now share time and zone selection with their case lists and scoped exports; seven browser journeys pass. Full-analysis planning/quality/forecast outputs remain separately labelled.
 - Water now includes recorded effective supply periods with audited corrections, multi-meter comparisons with complete coverage and double-counting checks, and consent-based recovery of pending case attachments after reload. See `docs/water-operations.md` for controls and exact limits.

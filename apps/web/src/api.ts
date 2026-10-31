@@ -13,7 +13,7 @@ export function dateTimeLocalToIso(value:string){const match=/^(\d{4})-(\d{2})-(
 export async function upload(path:string,file:File,notes='',idempotencyKey?:string){const form=new FormData();form.append('file',file);form.append('notes',notes);if(idempotencyKey)form.append('idempotency_key',idempotencyKey);const r=await fetch('/api/v1'+path,{method:'POST',credentials:'include',headers:{'X-CSRF-Token':csrf},body:form});const result=await r.json().catch(()=>({detail:'The service returned an unreadable response.'}));if(!r.ok)throw new ApiError(typeof result.detail==='string'?result.detail:'Upload failed',r.status);if(!result.id||!result.url)throw new Error('Upload confirmation is unreadable');return result}
 export async function api(path:string, options:RequestInit={}){
  const r=await fetch('/api/v1'+path,{credentials:'include',...options,headers:{'Content-Type':'application/json',...(options.method&&options.method!=='GET'?{'X-CSRF-Token':csrf}:{}),...options.headers}});
- const body=await r.json().catch(()=>({detail:'The service returned an unreadable response.'}));
+ const body=await r.json().catch((error:unknown)=>{if(error instanceof Error&&error.name==='AbortError')throw error;throw new ApiError('The service returned an unreadable response. Retry after checking the saved state.',502)});
  if(!r.ok)throw new ApiError(typeof body.detail==='string'?body.detail:body.detail?JSON.stringify(body.detail):body.message||`Request failed (${r.status})`,r.status);
  if(body.csrf_token)setCsrf(body.csrf_token);return body;
 }

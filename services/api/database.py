@@ -7,7 +7,16 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = Path(os.getenv("CIVIC_DATA_DIR", str(ROOT / "data")))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{(DATA_DIR / 'civicsignal.db').as_posix()}")
+def normalize_database_url(value):
+    # Hosted providers commonly supply these aliases; this project uses psycopg 3.
+    if value.startswith('postgres://'):
+        return 'postgresql+psycopg://' + value[len('postgres://'):]
+    if value.startswith('postgresql://'):
+        return 'postgresql+psycopg://' + value[len('postgresql://'):]
+    return value
+
+
+DATABASE_URL = normalize_database_url(os.getenv("DATABASE_URL", f"sqlite:///{(DATA_DIR / 'civicsignal.db').as_posix()}"))
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False, "timeout": 30} if DATABASE_URL.startswith("sqlite") else {}, pool_pre_ping=True)
 if DATABASE_URL.startswith("sqlite"):
     @event.listens_for(engine, "connect")

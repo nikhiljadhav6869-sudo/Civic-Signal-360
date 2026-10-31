@@ -1,4 +1,5 @@
-import {createContext, useContext, type ReactNode} from 'react';
+import {createContext, useContext, useEffect, type ReactNode} from 'react';
+import {advancedMarathi} from './advancedMarathi';
 
 export type InterfaceLanguage = 'en' | 'mr';
 
@@ -36,8 +37,8 @@ const translations: Record<string, string> = {
   'Demand forecast': 'मागणीचा अंदाज',
   'Scenario studio': 'परिस्थिती प्रयोगशाळा',
   'Impact & coverage': 'परिणाम आणि व्याप्ती',
-  'Model & sensor laboratory': 'मॉडेल आणि सेन्सर प्रयोगशाळा',
-  'Model & sensor lab': 'मॉडेल आणि सेन्सर प्रयोगशाळा',
+  'Data & model laboratory': 'डेटा आणि मॉडेल प्रयोगशाळा',
+  'Data & model lab': 'डेटा आणि मॉडेल प्रयोगशाळा',
   'Sociathon Live Demo': 'सोशिअथॉन थेट प्रात्यक्षिक',
   'About CivicSignal 360': 'CivicSignal 360 विषयी',
   'Report a problem': 'समस्या नोंदवा',
@@ -97,6 +98,7 @@ const translations: Record<string, string> = {
 const InterfaceLanguageContext = createContext<InterfaceLanguage>('en');
 
 export function InterfaceLanguageProvider({language, children}: {language: InterfaceLanguage; children: ReactNode}) {
+  useEffect(()=>{document.documentElement.lang=language},[language]);
   return <InterfaceLanguageContext.Provider value={language}>{children}</InterfaceLanguageContext.Provider>;
 }
 
@@ -105,5 +107,7 @@ export function useInterfaceLanguage() {
 }
 
 export function uiText(english: string, language: InterfaceLanguage) {
-  return language === 'mr' ? translations[english] || english : english;
+  return language === 'mr' ? translations[english] || advancedMarathi[english] || english : english;
 }
+
+export function useUiText(){const language=useInterfaceLanguage();return (english:string)=>uiText(english,language)}

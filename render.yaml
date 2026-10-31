@@ -1,0 +1,32 @@
+# Free-only deployment. No Render database (its free tier expires after 30 days),
+# paid disk or separate paid worker. Connect an external Neon Free database.
+# Free services sleep on idle; worker processing pauses while the service sleeps.
+services:
+  - type: web
+    name: civicsignal-360
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: python scripts/run_render.py
+    healthCheckPath: /api/v1/health
+    autoDeployTrigger: "off"
+    envVars:
+      - key: CIVIC_DEMO_MODE
+        value: "false"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: CIVIC_EVIDENCE_STORAGE
+        value: database
+      - key: CIVIC_DATA_DIR
+        value: /app/data
+      - key: DATABASE_URL
+        sync: false
+      - key: CIVIC_ADMIN_EMAIL
+        sync: false
+      - key: CIVIC_ADMIN_PASSWORD
+        sync: false
+      - key: OPENBLAS_NUM_THREADS
+        value: "1"
+      - key: OMP_NUM_THREADS
+        value: "1"
