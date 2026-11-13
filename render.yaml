@@ -14,6 +14,8 @@ services:
     envVars:
       - key: CIVIC_DEMO_MODE
         value: "false"
+      - key: CIVIC_PUBLIC_ORIGIN
+        value: https://civicsignal-360.onrender.com
       - key: COOKIE_SECURE
         value: "true"
       - key: CIVIC_EVIDENCE_STORAGE

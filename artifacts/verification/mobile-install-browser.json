@@ -1,0 +1,10 @@
+{
+  "scope": "Local mobile web-app installation checks; physical device installation unverified",
+  "checks": [
+    "Manifest, icon files, public address, QR image and PNG download passed",
+    "English/Marathi and 390/768/1440 layouts passed",
+    "Dismissed installation prompt never claims installed",
+    "Unconfigured address offers no misleading local QR"
+  ],
+  "status": "passed"
+}

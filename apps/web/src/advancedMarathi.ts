@@ -1,5 +1,6 @@
 // Application-owned interface copy only. Never translate citizen evidence or identifiers.
 export const advancedMarathi:Record<string,string>={
+  'Install mobile app':'मोबाइल अॅप स्थापित करा',
   'SOFTWARE WORKSPACE':'सॉफ्टवेअर कार्यक्षेत्र','Configured workspace':'नोंदणीकृत कार्यक्षेत्र',
   'Evaluation':'मूल्यमापन','Sensor health':'नोंदींची गुणवत्ता','Baseline versions':'आधार आवृत्त्या','Import readings':'निरीक्षणे आयात करा',
   'Review a baseline. Keep a way back.':'आधार आवृत्ती तपासा. मागील आवृत्ती जतन ठेवा.','Know what the model can support.':'मॉडेलच्या निष्कर्षांना किती आधार आहे ते जाणून घ्या.','Quality before conclusions.':'निष्कर्षांपूर्वी गुणवत्ता तपासा.','Bring your interval readings.':'आपली कालखंड निरीक्षणे आयात करा.',

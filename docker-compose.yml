@@ -6,6 +6,7 @@ services:
     environment:
       CIVIC_DEMO_MODE: "true"
       CIVIC_DATA_DIR: /app/data
+      CIVIC_PUBLIC_ORIGIN: ${CIVIC_PUBLIC_ORIGIN:-}
       DATABASE_URL: postgresql+psycopg://civic:civic-local@db:5432/civic
     volumes:
       - civic_evidence:/app/data

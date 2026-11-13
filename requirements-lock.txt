@@ -25,6 +25,7 @@ pydantic_core==2.33.2
 pytest==8.3.5
 python-dateutil==2.9.0.post0
 python-multipart==0.0.20
+qrcode==8.2
 pytz==2026.5
 scikit-learn==1.6.1
 scipy==1.18.1

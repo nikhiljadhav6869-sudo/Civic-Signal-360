@@ -56,6 +56,8 @@ from .water_case_context import router as water_context_router
 app.include_router(water_context_router)
 from .operations_readiness import router as readiness_router
 app.include_router(readiness_router)
+from .mobile_install import router as mobile_install_router
+app.include_router(mobile_install_router)
 
 
 @app.middleware("http")

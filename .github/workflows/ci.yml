@@ -41,6 +41,7 @@ jobs:
     env:
       COMPOSE_PROJECT_NAME: civicsignal-ci
       CIVIC_BASE_URL: http://127.0.0.1:8000
+      CIVIC_PUBLIC_ORIGIN: https://civicsignal-360.onrender.com
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -52,7 +53,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - name: Clear checked-in local results before recording this runner
-        run: rm -f -- artifacts/verification/completion-browser.json artifacts/verification/browser-results.json artifacts/verification/water-review-evidence.json artifacts/verification/water-history.json artifacts/verification/domain-timeline.json artifacts/verification/accountability-browser.json artifacts/verification/software-only-browser.json
+        run: rm -f -- artifacts/verification/completion-browser.json artifacts/verification/browser-results.json artifacts/verification/water-review-evidence.json artifacts/verification/water-history.json artifacts/verification/domain-timeline.json artifacts/verification/accountability-browser.json artifacts/verification/software-only-browser.json artifacts/verification/mobile-install-browser.json
       - name: Build and start disposable PostgreSQL demo stack
         run: docker compose up --build --wait --wait-timeout 240
       - name: All seven human review workflows and water operations
@@ -69,6 +70,8 @@ jobs:
         run: node scripts/accountability-browser-check.mjs
       - name: Software-only controls, Marathi and accessibility smoke checks
         run: node scripts/software-only-browser-check.mjs
+      - name: Mobile installation page, QR and bilingual browser checks
+        run: node scripts/mobile-install-browser-check.mjs
       - name: Preserve PostgreSQL evidence across application restart
         shell: bash
         run: |
@@ -94,6 +97,7 @@ jobs:
             artifacts/verification/domain-timeline.json
             artifacts/verification/accountability-browser.json
             artifacts/verification/software-only-browser.json
+            artifacts/verification/mobile-install-browser.json
       - name: Remove disposable CI containers and volumes
         if: always()
         run: docker compose down --volumes

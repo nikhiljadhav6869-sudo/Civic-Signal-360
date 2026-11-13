@@ -13,7 +13,11 @@ This repository contains real Python analytics, a durable relational API, a sepa
 
 ## Start locally
 
-The [accountable water pilot guide](docs/accountable-water-pilot.md) covers citizen disputes, evidence-gated closure, the bilingual staff workbench, response targets, device ingestion, notification retries, walkthroughs and the municipal pilot checklist. No hardware is required. See the [software-only handover](docs/software-only-handover.md) and [free Render deployment guide](docs/render-free-deployment.md); hosted and real-world validation remain pending.
+The [accountable water pilot guide](docs/accountable-water-pilot.md) covers citizen disputes, evidence-gated closure, the bilingual staff workbench, response targets, device ingestion, notification retries, walkthroughs and the municipal pilot checklist. No hardware is required. See the [software-only handover](docs/software-only-handover.md) and [free Render deployment guide](docs/render-free-deployment.md). The hosted health page has been checked; hosted workflows and real-world validation remain pending.
+
+## Install on a phone
+
+Open the [iPhone and Android installation page](https://civicsignal-360.onrender.com/install), or scan [the installation QR code](docs/assets/CivicSignal-360-install-QR.png). This installs the web app from the browser, with the user's confirmation. It is not an App Store or Play Store download. [Installation steps and limitations](docs/mobile-app.md).
 
 **One-click Windows start (after initial setup):** double-click `START-CIVICSIGNAL.bat` in the project folder. It starts the API and worker and opens the preview once ready. Keep its terminal window open; press Ctrl+C to stop. If the application is already running on port 8000, it opens that instance instead of starting another copy. In VS Code's PowerShell terminal, use `./START-CIVICSIGNAL.bat`.
 

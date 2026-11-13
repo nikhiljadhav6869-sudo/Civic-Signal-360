@@ -1,4 +1,4 @@
-const CACHE='civicsignal-shell-v1';
+const CACHE='civicsignal-shell-v2';
 const SHELL='/';
 
 self.addEventListener('install',event=>{
@@ -9,7 +9,7 @@ self.addEventListener('install',event=>{
     const html=await response.clone().text();
     await cache.put(SHELL,response);
     const assets=[...html.matchAll(/(?:src|href)="([^\"]+)"/g)].map(match=>match[1]).filter(path=>path.startsWith('/assets/'));
-    if(assets.length)await cache.addAll([...new Set(assets)]);
+    await cache.addAll([...new Set([...assets,'/manifest.webmanifest','/icons/icon-192.png','/icons/icon-512.png','/icons/maskable-512.png','/icons/apple-touch-icon.png'])]);
     await self.skipWaiting();
   })());
 });
@@ -38,7 +38,7 @@ self.addEventListener('fetch',event=>{
     })());
     return;
   }
-  if(url.pathname.startsWith('/assets/')){
+  if(url.pathname.startsWith('/assets/')||url.pathname.startsWith('/icons/')||url.pathname==='/manifest.webmanifest'){
     event.respondWith((async()=>{
       const cache=await caches.open(CACHE);
       try{const response=await fetch(request);if(response.ok)await cache.put(request,response.clone());return response;}
