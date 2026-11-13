@@ -8,7 +8,15 @@ const browser=await chromium.launch({headless:true,executablePath:process.env.CI
 const results={provenance:'Local synthetic software-only acceptance; no hardware or live email',checks:[],errors:[]};
 const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
 await context.route('**/*',route=>new URL(route.request().url()).origin===base||/^(blob|data):/.test(route.request().url())?route.continue():route.abort());
-const auth=await context.request.post(base+'/api/v1/auth/login',{data:{email:'admin@civicsignal.local',password:'CivicDemo!2026'}});assert.ok(auth.ok());
+let auth;
+for(let attempt=0;attempt<3;attempt++){
+  auth=await context.request.post(base+'/api/v1/auth/login',{data:{email:'admin@civicsignal.local',password:'CivicDemo!2026'}});
+  if(auth.status()!==429)break;
+  const retryAfter=Number(auth.headers()['retry-after']);
+  if(attempt===2)break;
+  await new Promise(resolve=>setTimeout(resolve,(Number.isFinite(retryAfter)?Math.max(1,Math.min(65,retryAfter)):60)*1000+1000));
+}
+assert.equal(auth.status(),200,'Demo administrator sign-in failed: '+auth.status()+' '+await auth.text());
 const {csrf_token}=await auth.json();
 const page=await context.newPage();page.on('pageerror',e=>results.errors.push(e.message));
 const csp=[];page.on('console',message=>{if(message.type()==='error'&&/content security policy|violates.*directive/i.test(message.text()))csp.push(message.text())});
