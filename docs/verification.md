@@ -195,3 +195,11 @@ Photo recovery verification injects offline selection, a lost post-commit respon
 - A repeat run of the broader `tests/test_job_controls.py` suite emitted no test progress for roughly 90 seconds and was interrupted. The new streetlight configuration handoff is covered separately by three fast worker-parameter unit tests; the previous durable worker-control evidence remains recorded above.
 - Docker was unavailable in PATH. Docker/PostgreSQL, CI execution, external deployment, complete accessibility certification and real utility performance remain unverified.
 - The blueprint PDF was not supplied. The scope gaps in limitations.md remain implementation work.
+
+## Mobile and hosted checks — 13 November 2026
+
+The Render Free service is live at `https://civicsignal-360.onrender.com` with Neon Free storage configured. HTTP checks returned 200 for health, `/install`, `/manifest.webmanifest`, an application icon, `/api/v1/install` and `/api/v1/install/qr.png`. The installation metadata returned exactly `https://civicsignal-360.onrender.com/install`. The hosted installation page displayed a QR and English and Marathi instructions in the browser. These checks do not establish hosted case persistence, sign-in, photo upload or physical-device installation.
+
+Thirteen focused API/asset tests passed; the local Playwright mobile check passed QR download, manifest/icons, 390/768/1440 layouts, language switching, a dismissed install prompt and no misleading QR when a public URL is unconfigured. The recorded browser result is `artifacts/verification/mobile-install-browser.json`; the QR artifact is `docs/assets/CivicSignal-360-install-QR.png`. Native APK/IPA and store publishing have not been done.
+
+The 31 October GitHub Docker job failed after its first eight workflows passed because the supporting-inspector browser script used the outdated accessible button name `Open` instead of `Open work`. Later baseline and scenario failures followed while that test left the browser signed in as a support inspector. The selector and explicit field-workspace navigation have been corrected; a subsequent full CI result is required before claiming a green hosted browser run. Older statements above about no external deployment describe the earlier verification state.

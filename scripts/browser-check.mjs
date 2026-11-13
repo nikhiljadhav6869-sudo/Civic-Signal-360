@@ -321,7 +321,8 @@ await check('Supporting team assignment, field access and removal work in the in
   }
   await page.setViewportSize({width:1440,height:1000});
   await signIn('support@civicsignal.local');
-  const row=page.locator('tr').filter({hasText:title});await row.getByRole('button',{name:'Open '+title,exact:true}).click();
+  await page.goto(base+'/inspector');await ready();
+  const row=page.locator('tr').filter({hasText:title});await row.getByRole('button',{name:'Open work '+title,exact:true}).click();
   await page.getByRole('button',{name:'Take action',exact:true}).click();
   assert.equal(await page.getByRole('button',{name:'Save supporting team',exact:true}).count(),0);
   await page.getByLabel('Findings and intervention notes').fill('Synthetic supporting inspector finding entered through the browser.');
@@ -334,6 +335,7 @@ await check('Supporting team assignment, field access and removal work in the in
   assert.deepEqual(removed.secondary_assignees,[]);
   assert.ok(removed.audits.some(a=>a.action==='supporting_assignment'));
   await signIn('support@civicsignal.local');
+  await page.goto(base+'/inspector');await ready();
   assert.equal(await page.locator('tr').filter({hasText:title}).count(),0);
   await signIn('operator@civicsignal.local');
 });

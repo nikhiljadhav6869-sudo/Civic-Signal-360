@@ -1,10 +1,16 @@
 # CivicSignal 360 — working status
 
-Updated 31 October 2026. The local prototype is usable; full master-prompt acceptance and production readiness are not claimed.
+Updated 13 November 2026. The software-only prototype is usable locally and is deployed on Render Free with a Neon Free database. Full master-prompt acceptance and production readiness are not claimed.
+
+## Current delivery status
+
+- The public service at `https://civicsignal-360.onrender.com` has passed health and root HTTP checks. The mobile `/install` page, web manifest, icon, installation metadata and QR image also returned HTTP 200. The English and Marathi installation page was viewed in the hosted browser.
+- The installable iPhone/Android web app and QR are on the GitHub `codex/software-only-free-deployment` branch. Local mobile browser checks passed at 390, 768 and 1440 pixels; 13 mobile API/asset tests passed. This is a browser-installed app, not an APK, IPA or store listing.
+- Remaining verification: scan/install on physical iPhone and Android devices; hosted sign-in, report, photo and persistence journeys; a full green GitHub browser run; native-speaker and assistive-technology review; municipal pilot and production hardening. No real utility data or hardware is connected. Free-tier sleep and quotas remain.
 
 ## Software-only and free deployment pass
 
-No hardware is required. Software data guidance, expanded Marathi controls, worker readiness and guarded temporary-record cleanup are implemented. Free Render configuration with external PostgreSQL and database-backed private photos is prepared. The full backend run passed 236 tests; 19 storage/migration/photo/backup tests passed after the storage change. Hosted deployment and its resource limits remain unverified. See [software-only handover](docs/software-only-handover.md) and [free deployment setup](docs/render-free-deployment.md).
+No hardware is required. Software data guidance, expanded Marathi controls, worker readiness and guarded temporary-record cleanup are implemented. Free Render configuration with external PostgreSQL and database-backed private photos is deployed. The full backend run passed 236 tests; 19 storage/migration/photo/backup tests passed after the storage change. Hosted health and mobile endpoints are verified; full hosted workflows and long-term resource behavior remain unverified. See [software-only handover](docs/software-only-handover.md) and [free deployment setup](docs/render-free-deployment.md).
 
 ## Accountable water pilot improvements
 
@@ -67,6 +73,6 @@ The following milestone list records earlier work; smaller test counts are histo
 
 ## Remaining beyond the selected completion pass
 
-Full staff-interface translation, exhaustive assistive-technology accessibility review, production hardening, public deployment and integration with real utility data remain separate. The broader master prompt also includes items such as per-frame detector recomputation, historical decision playback, specialized registry editors; their precise boundaries remain in docs/requirements-traceability.md. Current schedule configuration remains distinct from the new effective-period registry. Water reviews can be explicitly attached as case evidence with preserved inputs and duplicate-safe retries, including opt-in reload recovery. They do not establish field inspection or change case status.
+Full staff-interface translation, exhaustive assistive-technology accessibility review, production hardening, physical-phone installation and hosted workflow acceptance remain separate. The broader master prompt also includes items such as per-frame detector recomputation, historical decision playback and specialized registry editors; their precise boundaries remain in docs/requirements-traceability.md. Current schedule configuration remains distinct from the new effective-period registry. Water reviews can be explicitly attached as case evidence with preserved inputs and duplicate-safe retries, including opt-in reload recovery. They do not establish field inspection or change case status.
 
-The supplied master prompt is authoritative; no additional blueprint PDF is required. See docs/completion-handover.md for the selected requirements and demonstration steps, docs/verification.md for executed evidence, and docs/limitations.md for remaining boundaries. No external application deployment has been made.
+The supplied master prompt is authoritative; no additional blueprint PDF is required. See docs/completion-handover.md for the selected requirements and demonstration steps, docs/verification.md for executed evidence, and docs/limitations.md for remaining boundaries. The public service is deployed as a prototype, not certified for municipal production use.

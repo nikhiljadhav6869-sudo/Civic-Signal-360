@@ -4,7 +4,7 @@ CivicSignal 360 now includes an installable web app, a bilingual `/install` page
 
 ## Public links
 
-Render has assigned `https://civicsignal-360.onrender.com` to the Free service. The mobile changes must be deployed before these new routes are usable:
+The mobile web app is deployed on Render Free. The public page and QR endpoint returned HTTP 200, and the English and Marathi page content was checked in a browser:
 
 - Installation page for both platforms: `https://civicsignal-360.onrender.com/install`
 - Downloadable QR: `https://civicsignal-360.onrender.com/api/v1/install/qr.png`
@@ -21,6 +21,6 @@ The installed icon opens the same authenticated application. The web app does no
 
 ## Before sharing
 
-Deploy the mobile commit, check `/install`, download the QR, scan it on a real iPhone and Android phone and complete Home Screen installation. Confirm sign-in, report submission and image uploads over HTTPS. Local browser checks do not establish physical-device installation or hosted persistence. No App Store/Play Store download or physical-phone acceptance is claimed until separately verified.
+Scan the QR on a real iPhone and Android phone and complete Home Screen installation. Confirm sign-in, report submission and image uploads over HTTPS. Local browser checks and hosted page checks do not establish physical-device installation or hosted workflow persistence. No App Store/Play Store download or physical-phone acceptance is claimed until separately verified.
 
 Icons are reproducible using `scripts/generate_app_icons.py`. The manifest is `apps/web/public/manifest.webmanifest`. The install routes are public but expose only the configured public URL and QR, never credentials or case data.
